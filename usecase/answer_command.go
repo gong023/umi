@@ -168,12 +168,65 @@ func (h *AnswerCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 		},
 	}
 
-	// Add the quiz (first line of the conversation history)
+	// Process the conversation history and add it to the messages
 	if len(conversationHistory) > 0 {
+		// The first line is always the quiz (assistant's role)
 		messages = append(messages, domain.ChatMessage{
 			Role:    "assistant",
 			Content: conversationHistory[0],
 		})
+
+		// Process the rest of the conversation history
+		currentRole := "user" // Start with user after the quiz
+		var currentMessage string
+
+		for i := 1; i < len(conversationHistory); i++ {
+			line := strings.TrimSpace(conversationHistory[i])
+			if line == "" {
+				continue // Skip empty lines
+			}
+
+			// Check if this line starts a new message
+			if strings.HasPrefix(line, "質問: ") {
+				// If we have a message in progress, add it
+				if currentMessage != "" {
+					messages = append(messages, domain.ChatMessage{
+						Role:    currentRole,
+						Content: currentMessage,
+					})
+				}
+				// Start a new user message
+				currentRole = "user"
+				currentMessage = line
+			} else {
+				// If this is not a question line, it's part of the assistant's response
+				if currentRole == "user" && currentMessage != "" {
+					// Add the completed user message
+					messages = append(messages, domain.ChatMessage{
+						Role:    currentRole,
+						Content: currentMessage,
+					})
+					// Start a new assistant message
+					currentRole = "assistant"
+					currentMessage = line
+				} else if currentRole == "assistant" {
+					// Continue the assistant's message
+					currentMessage += "\n" + line
+				} else {
+					// Start a new assistant message
+					currentRole = "assistant"
+					currentMessage = line
+				}
+			}
+		}
+
+		// Add the last message if there is one
+		if currentMessage != "" {
+			messages = append(messages, domain.ChatMessage{
+				Role:    currentRole,
+				Content: currentMessage,
+			})
+		}
 	}
 
 	// Add the current answer
@@ -181,6 +234,12 @@ func (h *AnswerCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 		Role:    "user",
 		Content: "回答: " + message,
 	})
+
+	// Log the messages being sent to OpenAI
+	h.logger.Info("Sending the following messages to OpenAI:")
+	for i, msg := range messages {
+		h.logger.Info("Message %d - Role: %s, Content: %s", i, msg.Role, msg.Content)
+	}
 
 	req := &domain.ChatCompletionRequest{
 		Model:       "gpt-4-turbo",
@@ -227,11 +286,17 @@ func (h *AnswerCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 			existingContent = string(contextContent)
 		}
 
-		// Append the new judgment with a newline
+		// Append the user's answer and the judgment with newlines
 		updatedContent := existingContent
 		if len(updatedContent) > 0 && !strings.HasSuffix(updatedContent, "\n") {
 			updatedContent += "\n"
 		}
+
+		// Add the user's answer
+		userAnswer := "回答: " + message
+		updatedContent += userAnswer + "\n"
+
+		// Add the assistant's judgment
 		updatedContent += judgment
 
 		// Write the updated content back to the context file
