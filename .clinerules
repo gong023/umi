@@ -48,10 +48,6 @@ This is a server for the discord bot.
 
 - The bot serves the websocket gateway.
 - The bot is an agent for the OpenAI. So that the core thought about the quiz is in OpenAI side.
-  - The conversation is saved in memo/context.
-  - When /create command is called, request prompt in memo/prompt to OpenAI and save their response. 
-  - When /q, /answer, /info, and /clue are called, all the conversation history should be passed to OpenAI and append their response.
-  - When /quit is called, delete all the conversation history.
 - The bot server takes configs such as API keys from the environment variables.
 - The bot can uses local text files as memories.
   - The bot can create the multiple files and directories as necessary.
@@ -75,11 +71,11 @@ This repository complies with the clean architecture. The levels are usecase -> 
 - .github
   - The files for github actions
 - memo
-  - The local files for the bot. It consists of memories and prompts.
-  - memo/context
-    - The directory for the quiz memories. Only the bot are supposed to create or update the files.
-    - This directory should be .gitkeep and the other memory files should be .gitignore.
-  - memo/prompt
+  - The local files for the bot. It consists of memo/context.txt and memo/prompt dir.
+  - memo/context.txt
+    - The file for the conversation history. Only the bot can create or update the file.
+    - This file has to be should be in .gitignore.
+  - memo/prompt/(onCreate|onQ|onAnswer|onInfo|onClue).txt
     - The directory for the prompt memories. The users and bot can create or update the files.
 
 # Coding styles

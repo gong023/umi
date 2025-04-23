@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/gong023/umi/domain"
 )
@@ -40,50 +39,44 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	}
 
 	// Check if a quiz already exists
-	contextDir := filepath.Join("memo", "context")
-	files, err := os.ReadDir(contextDir)
-	if err != nil && !os.IsNotExist(err) {
-		h.logger.Error("Failed to read context directory: %v", err)
-		return
-	}
+	contextPath := filepath.Join("memo", "context.txt")
+	quizExists := false
+	var existingQuiz string
 
-	// Find the most recent quiz file
-	var latestQuizFile string
-	var latestModTime int64
-	if err == nil { // Directory exists
-		for _, file := range files {
-			if file.IsDir() || !strings.HasPrefix(file.Name(), "quiz_") {
-				continue
-			}
+	// Check if the context file exists
+	if _, err := os.Stat(contextPath); err == nil {
+		// Read the existing context file
+		contextContent, err := os.ReadFile(contextPath)
+		if err != nil {
+			h.logger.Error("Failed to read context file: %v", err)
+			return
+		}
 
-			filePath := filepath.Join(contextDir, file.Name())
-			fileInfo, err := os.Stat(filePath)
-			if err != nil {
-				h.logger.Error("Failed to get file info for %s: %v", filePath, err)
-				continue
-			}
-
-			modTime := fileInfo.ModTime().Unix()
-			if modTime > latestModTime {
-				latestModTime = modTime
-				latestQuizFile = filePath
-			}
+		// If the file is not empty, a quiz exists
+		if len(contextContent) > 0 {
+			quizExists = true
+			existingQuiz = string(contextContent)
 		}
 	}
 
 	// If a quiz already exists, return it and introduce the /quit command
-	if latestQuizFile != "" {
-		h.logger.Info("Quiz already exists: %s", latestQuizFile)
-
-		// Read the existing quiz
-		quizContent, err := os.ReadFile(latestQuizFile)
-		if err != nil {
-			h.logger.Error("Failed to read quiz file: %v", err)
-			return
-		}
+	if quizExists {
+		h.logger.Info("Quiz already exists")
 
 		// Format the response with the existing quiz and introduce the /quit command
-		formattedResponse := fmt.Sprintf("**現在のウミガメのスープクイズ**\n\n%s\n\n現在のクイズを終了するには `/quit` コマンドを使用してください。", strings.TrimSpace(string(quizContent)))
+		formattedResponse := fmt.Sprintf("**現在のウミガメのスープクイズ**\n\n%s\n\n現在のクイズを終了するには `/quit` コマンドを使用してください。", strings.TrimSpace(existingQuiz))
+
+		// Send the response with the existing quiz
+		followupResponse := &domain.InteractionResponse{
+			Type: int(domain.InteractionResponseChannelMessageWithSource),
+			Data: &domain.InteractionResponseData{
+				Content: formattedResponse,
+			},
+		}
+
+		if err := s.InteractionRespond(i, followupResponse); err != nil {
+			h.logger.Error("Failed to send follow-up response: %v", err)
+		}
 
 		h.logger.Info("Returning existing quiz: %s", formattedResponse)
 		return
@@ -93,7 +86,7 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	h.logger.Info("No existing quiz found, creating a new one")
 
 	// Read the prompt file
-	promptPath := filepath.Join("memo", "prompt", "umigame.txt")
+	promptPath := filepath.Join("memo", "prompt", "oncreate.txt")
 	promptContent, err := os.ReadFile(promptPath)
 	if err != nil {
 		h.logger.Error("Failed to read prompt file: %v", err)
@@ -133,16 +126,14 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	quiz := resp.Choices[0].Message.Content
 	h.logger.Info("Received quiz: %s", quiz)
 
-	// Create the context directory if it doesn't exist
-	if err := os.MkdirAll(contextDir, 0755); err != nil {
-		h.logger.Error("Failed to create context directory: %v", err)
+	// Create the memo directory if it doesn't exist
+	memoDir := filepath.Dir(contextPath)
+	if err := os.MkdirAll(memoDir, 0755); err != nil {
+		h.logger.Error("Failed to create memo directory: %v", err)
 		return
 	}
 
-	// Save the quiz to the context directory
-	timestamp := time.Now().Format("20060102_150405")
-	contextPath := filepath.Join(contextDir, fmt.Sprintf("quiz_%s.txt", timestamp))
-
+	// Save the quiz to the context file
 	if err := os.WriteFile(contextPath, []byte(quiz), 0644); err != nil {
 		h.logger.Error("Failed to write quiz to context file: %v", err)
 		return
@@ -153,8 +144,17 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	// Format the quiz
 	formattedQuiz := fmt.Sprintf("**新しいウミガメのスープクイズ**\n\n%s", strings.TrimSpace(quiz))
 
-	// Create a follow-up message with the quiz
-	// Note: In a real implementation, you would need to use the Discord API to send a follow-up message
-	// This is just a placeholder to demonstrate the concept
+	// Send the response with the new quiz
+	followupResponse := &domain.InteractionResponse{
+		Type: int(domain.InteractionResponseChannelMessageWithSource),
+		Data: &domain.InteractionResponseData{
+			Content: formattedQuiz,
+		},
+	}
+
+	if err := s.InteractionRespond(i, followupResponse); err != nil {
+		h.logger.Error("Failed to send follow-up response: %v", err)
+	}
+
 	h.logger.Info("Quiz created: %s", formattedQuiz)
 }
