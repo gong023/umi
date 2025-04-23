@@ -8,33 +8,6 @@ This is a server for the discord bot.
 - The bot and users have conversation in Japanese.
 - The bot server memorizes only one quiz at most.
 
-## Commands
-
-- /create
-  - The bot asks LLM to create a new quiz and memorizes it.
-  - If the quiz already exists, this bot returns the current quiz, and also introduces the users /quit command to exit the current quiz.
-- /q $message
-  - About $message, the bot returns the answers from LLM.
-     - The LLM answer is supposed to be categorized to "はい","いいえ", or "わからない/関係ない" about the current quiz.
-  - If the current quiz does not exist, this bot introduces the /create command.
-- /answer $message
-  - About $message, the bot returns the answers from LLM.
-     - The LLM answer is supposed to be categorized to "正解" or "不正解" about the current quiz.
-  - If the LLM judges the quiz is solved, the current quiz memory is cleaned.
-  - If the current quiz does not exist, this bot introduces the /create command.
-- /info
-  - The bot asks LLM to summarize the current quiz and its details which clarified by the users' questions.
-  - If the current quiz does not exist, the bot introduces the /create command
-- /clue
-  - The bot asks LLM a clue about the current quiz.
-- /quit
-  - The bot cleans the memory about the current question.
-  - If the current quiz does not exist, the bot does nothing.
-- /ping
-  - The bot reponses just "はい!". No the other actions like requesting OpenAI api and searching memory.
-- /help
-  - The bot lists how to use the all commands.
-
 # Tech stack
 
 - golang
@@ -81,3 +54,5 @@ This repository complies with the clean architecture. The levels are usecase -> 
 # Coding styles
 
 - No need comments unless the functions are too complicated(^50 lines) or need context on the background.
+- goimport should be used instead of gofmt.
+- When the task is completed, make sure the lint and test are passed.
