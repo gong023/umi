@@ -67,15 +67,8 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 		formattedResponse := fmt.Sprintf("**現在のウミガメのスープクイズ**\n\n%s\n\n現在のクイズを終了するには `/quit` コマンドを使用してください。", strings.TrimSpace(existingQuiz))
 
 		// Send the response with the existing quiz
-		followupResponse := &domain.InteractionResponse{
-			Type: int(domain.InteractionResponseChannelMessageWithSource),
-			Data: &domain.InteractionResponseData{
-				Content: formattedResponse,
-			},
-		}
-
-		if err := s.InteractionRespond(i, followupResponse); err != nil {
-			h.logger.Error("Failed to send follow-up response: %v", err)
+		if err := s.FollowupMessage(i, formattedResponse); err != nil {
+			h.logger.Error("Failed to send follow-up message: %v", err)
 		}
 
 		h.logger.Info("Returning existing quiz: %s", formattedResponse)
@@ -145,15 +138,8 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	formattedQuiz := fmt.Sprintf("**新しいウミガメのスープクイズ**\n\n%s", strings.TrimSpace(quiz))
 
 	// Send the response with the new quiz
-	followupResponse := &domain.InteractionResponse{
-		Type: int(domain.InteractionResponseChannelMessageWithSource),
-		Data: &domain.InteractionResponseData{
-			Content: formattedQuiz,
-		},
-	}
-
-	if err := s.InteractionRespond(i, followupResponse); err != nil {
-		h.logger.Error("Failed to send follow-up response: %v", err)
+	if err := s.FollowupMessage(i, formattedQuiz); err != nil {
+		h.logger.Error("Failed to send follow-up message: %v", err)
 	}
 
 	h.logger.Info("Quiz created: %s", formattedQuiz)

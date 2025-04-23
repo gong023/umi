@@ -67,15 +67,8 @@ func (h *InfoCommandHandler) Handle(s domain.Session, i *domain.InteractionCreat
 		followupMessage := "現在クイズが存在しません。`/create` コマンドで新しいクイズを作成してください。"
 
 		// Send the response with the message
-		followupResponse := &domain.InteractionResponse{
-			Type: int(domain.InteractionResponseChannelMessageWithSource),
-			Data: &domain.InteractionResponseData{
-				Content: followupMessage,
-			},
-		}
-
-		if err := s.InteractionRespond(i, followupResponse); err != nil {
-			h.logger.Error("Failed to send follow-up response: %v", err)
+		if err := s.FollowupMessage(i, followupMessage); err != nil {
+			h.logger.Error("Failed to send follow-up message: %v", err)
 		}
 
 		h.logger.Info("No quiz available, suggesting /create command: %s", followupMessage)
@@ -167,15 +160,8 @@ func (h *InfoCommandHandler) Handle(s domain.Session, i *domain.InteractionCreat
 	}
 
 	// Send the response with the info
-	followupResponse := &domain.InteractionResponse{
-		Type: int(domain.InteractionResponseChannelMessageWithSource),
-		Data: &domain.InteractionResponseData{
-			Content: formattedInfo,
-		},
-	}
-
-	if err := s.InteractionRespond(i, followupResponse); err != nil {
-		h.logger.Error("Failed to send follow-up response: %v", err)
+	if err := s.FollowupMessage(i, formattedInfo); err != nil {
+		h.logger.Error("Failed to send follow-up message: %v", err)
 	}
 
 	h.logger.Info("Info created: %s", formattedInfo)

@@ -90,15 +90,8 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 		followupMessage := "現在クイズが存在しません。`/create` コマンドで新しいクイズを作成してください。"
 
 		// Send the response with the message
-		followupResponse := &domain.InteractionResponse{
-			Type: int(domain.InteractionResponseChannelMessageWithSource),
-			Data: &domain.InteractionResponseData{
-				Content: followupMessage,
-			},
-		}
-
-		if err := s.InteractionRespond(i, followupResponse); err != nil {
-			h.logger.Error("Failed to send follow-up response: %v", err)
+		if err := s.FollowupMessage(i, followupMessage); err != nil {
+			h.logger.Error("Failed to send follow-up message: %v", err)
 		}
 
 		h.logger.Info("No quiz available, suggesting /create command: %s", followupMessage)
@@ -184,15 +177,8 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 	}
 
 	// Send the response with the answer
-	followupResponse := &domain.InteractionResponse{
-		Type: int(domain.InteractionResponseChannelMessageWithSource),
-		Data: &domain.InteractionResponseData{
-			Content: formattedAnswer,
-		},
-	}
-
-	if err := s.InteractionRespond(i, followupResponse); err != nil {
-		h.logger.Error("Failed to send follow-up response: %v", err)
+	if err := s.FollowupMessage(i, formattedAnswer); err != nil {
+		h.logger.Error("Failed to send follow-up message: %v", err)
 	}
 
 	h.logger.Info("Answer created: %s", formattedAnswer)

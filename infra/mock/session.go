@@ -38,6 +38,20 @@ func (m *MockSession) EXPECT() *MockSessionMockRecorder {
 	return m.recorder
 }
 
+// FollowupMessage mocks base method.
+func (m *MockSession) FollowupMessage(arg0 *domain.InteractionCreate, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FollowupMessage", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// FollowupMessage indicates an expected call of FollowupMessage.
+func (mr *MockSessionMockRecorder) FollowupMessage(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FollowupMessage", reflect.TypeOf((*MockSession)(nil).FollowupMessage), arg0, arg1)
+}
+
 // InteractionRespond mocks base method.
 func (m *MockSession) InteractionRespond(arg0 *domain.InteractionCreate, arg1 *domain.InteractionResponse) error {
 	m.ctrl.T.Helper()

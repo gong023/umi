@@ -50,15 +50,8 @@ func (h *QuitCommandHandler) Handle(s domain.Session, i *domain.InteractionCreat
 		followupMessage := "現在クイズが存在しません。`/create` コマンドで新しいクイズを作成してください。"
 
 		// Send the response with the message
-		followupResponse := &domain.InteractionResponse{
-			Type: int(domain.InteractionResponseChannelMessageWithSource),
-			Data: &domain.InteractionResponseData{
-				Content: followupMessage,
-			},
-		}
-
-		if err := s.InteractionRespond(i, followupResponse); err != nil {
-			h.logger.Error("Failed to send follow-up response: %v", err)
+		if err := s.FollowupMessage(i, followupMessage); err != nil {
+			h.logger.Error("Failed to send follow-up message: %v", err)
 		}
 
 		h.logger.Info("No quiz available, suggesting /create command: %s", followupMessage)
@@ -73,15 +66,8 @@ func (h *QuitCommandHandler) Handle(s domain.Session, i *domain.InteractionCreat
 		errorMessage := "クイズの終了に失敗しました。"
 
 		// Send the response with the message
-		errorResponse := &domain.InteractionResponse{
-			Type: int(domain.InteractionResponseChannelMessageWithSource),
-			Data: &domain.InteractionResponseData{
-				Content: errorMessage,
-			},
-		}
-
-		if err := s.InteractionRespond(i, errorResponse); err != nil {
-			h.logger.Error("Failed to send error response: %v", err)
+		if err := s.FollowupMessage(i, errorMessage); err != nil {
+			h.logger.Error("Failed to send error message: %v", err)
 		}
 
 		return
@@ -91,15 +77,8 @@ func (h *QuitCommandHandler) Handle(s domain.Session, i *domain.InteractionCreat
 	successMessage := "クイズを終了しました。新しいクイズを始めるには `/create` コマンドを使用してください。"
 
 	// Send the response with the message
-	successResponse := &domain.InteractionResponse{
-		Type: int(domain.InteractionResponseChannelMessageWithSource),
-		Data: &domain.InteractionResponseData{
-			Content: successMessage,
-		},
-	}
-
-	if err := s.InteractionRespond(i, successResponse); err != nil {
-		h.logger.Error("Failed to send success response: %v", err)
+	if err := s.FollowupMessage(i, successMessage); err != nil {
+		h.logger.Error("Failed to send success message: %v", err)
 	}
 
 	h.logger.Info("Quiz quit successfully")

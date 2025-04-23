@@ -23,6 +23,7 @@ type CommandHandler interface {
 
 type Session interface {
 	InteractionRespond(i *InteractionCreate, r *InteractionResponse) error
+	FollowupMessage(i *InteractionCreate, content string) error
 }
 
 type InteractionCreate struct {

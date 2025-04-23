@@ -124,6 +124,30 @@ func (s *Session) InteractionRespond(i *domain.InteractionCreate, r *domain.Inte
 	return fmt.Errorf("no original interaction available")
 }
 
+func (s *Session) FollowupMessage(i *domain.InteractionCreate, content string) error {
+	if i.Original != nil {
+		originalInteractionCreate, ok := i.Original.(*discordgo.InteractionCreate)
+		if ok {
+			s.logger.Info("Sending followup message for interaction: ID=%s", originalInteractionCreate.Interaction.ID)
+
+			// Create a webhook message
+			_, err := s.session.FollowupMessageCreate(originalInteractionCreate.Interaction, true, &discordgo.WebhookParams{
+				Content: content,
+			})
+
+			if err != nil {
+				s.logger.Error("Failed to send followup message: %v", err)
+			}
+			return err
+		} else {
+			s.logger.Error("Original interaction is not of type *discordgo.InteractionCreate: %T", i.Original)
+		}
+	}
+
+	s.logger.Error("No original interaction available, cannot send followup message")
+	return fmt.Errorf("no original interaction available")
+}
+
 func ConvertInteraction(i *discordgo.InteractionCreate) *domain.InteractionCreate {
 	if i == nil || i.Interaction == nil {
 		return nil
