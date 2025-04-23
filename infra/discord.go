@@ -1,6 +1,8 @@
 package infra
 
 import (
+	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/gong023/umi/domain"
 )
@@ -39,37 +41,35 @@ func (c *DiscordClient) RegisterHandler(handler interface{}) func() {
 
 func (c *DiscordClient) RegisterCommands(commands []*domain.ApplicationCommand) error {
 	c.logger.Info("Registering %d commands", len(commands))
-	
+
 	for _, cmd := range commands {
 		_, err := c.session.ApplicationCommandCreate(c.session.State.User.ID, "", &discordgo.ApplicationCommand{
 			Name:        cmd.Name,
 			Description: cmd.Description,
 		})
-		
+
 		if err != nil {
 			c.logger.Error("Failed to register command %s: %v", cmd.Name, err)
 			return err
 		}
-		
+
 		c.logger.Info("Registered command: %s", cmd.Name)
 	}
-	
+
 	return nil
 }
 
 func (c *DiscordClient) DeleteCommands() error {
 	c.logger.Info("Deleting all commands")
-	
-	// Get all the commands
+
 	commands, err := c.session.ApplicationCommands(c.session.State.User.ID, "")
 	if err != nil {
 		c.logger.Error("Failed to get commands: %v", err)
 		return err
 	}
-	
+
 	c.logger.Info("Found %d commands to delete", len(commands))
-	
-	// Delete each command
+
 	for _, cmd := range commands {
 		c.logger.Info("Deleting command: %s", cmd.Name)
 		err := c.session.ApplicationCommandDelete(c.session.State.User.ID, "", cmd.ID)
@@ -78,7 +78,7 @@ func (c *DiscordClient) DeleteCommands() error {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -95,25 +95,21 @@ func NewSession(session *discordgo.Session) *Session {
 }
 
 func (s *Session) InteractionRespond(i *domain.InteractionCreate, r *domain.InteractionResponse) error {
-	// Use the original interaction if available
 	if i.Original != nil {
 		originalInteractionCreate, ok := i.Original.(*discordgo.InteractionCreate)
 		if ok {
-			// Log the original interaction details
 			s.logger.Info("Using original InteractionCreate: ID=%s, Type=%d", originalInteractionCreate.Interaction.ID, originalInteractionCreate.Interaction.Type)
-			
-			// Create the response
+
 			response := &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseType(r.Type),
 				Data: &discordgo.InteractionResponseData{
 					Content: r.Data.Content,
 				},
 			}
-			
-			// Log the response
+
 			s.logger.Info("Sending response: Type=%d, Content=%s", response.Type, response.Data.Content)
-			
-			// Send the response
+
+			// Send the response - this is the key part
 			err := s.session.InteractionRespond(originalInteractionCreate.Interaction, response)
 			if err != nil {
 				s.logger.Error("Failed to respond to interaction: %v", err)
@@ -122,39 +118,10 @@ func (s *Session) InteractionRespond(i *domain.InteractionCreate, r *domain.Inte
 		} else {
 			s.logger.Error("Original interaction is not of type *discordgo.InteractionCreate: %T", i.Original)
 		}
-	} else {
-		s.logger.Info("No original interaction available, falling back to creating a new one")
 	}
-	
-	// Fallback to creating a new interaction
-	interaction := &discordgo.Interaction{
-		ID:   i.ID,
-		Type: discordgo.InteractionType(i.Type),
-		Data: &discordgo.ApplicationCommandInteractionData{
-			Name: i.Data.Name,
-		},
-	}
-	
-	// Log the fallback interaction details
-	s.logger.Info("Using fallback interaction: ID=%s, Type=%d", interaction.ID, interaction.Type)
-	
-	// Create the response
-	response := &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseType(r.Type),
-		Data: &discordgo.InteractionResponseData{
-			Content: r.Data.Content,
-		},
-	}
-	
-	// Log the response
-	s.logger.Info("Sending fallback response: Type=%d, Content=%s", response.Type, response.Data.Content)
-	
-	// Send the response
-	err := s.session.InteractionRespond(interaction, response)
-	if err != nil {
-		s.logger.Error("Failed to respond to fallback interaction: %v", err)
-	}
-	return err
+
+	s.logger.Error("No original interaction available, cannot respond")
+	return fmt.Errorf("no original interaction available")
 }
 
 func ConvertInteraction(i *discordgo.InteractionCreate) *domain.InteractionCreate {
