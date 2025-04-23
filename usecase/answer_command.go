@@ -27,9 +27,19 @@ func (h *AnswerCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	// Extract the message from the command options
 	var message string
 	if i.Data != nil && len(i.Data.Options) > 0 {
+		h.logger.Info("Command options found: %d options", len(i.Data.Options))
+		for idx, opt := range i.Data.Options {
+			h.logger.Info("Option %d: Name=%s, Value=%v", idx, opt.Name, opt.Value)
+		}
+
 		if val, ok := i.Data.Options[0].Value.(string); ok {
 			message = val
+			h.logger.Info("Extracted answer from user: %s", message)
+		} else {
+			h.logger.Error("Failed to extract answer: Value is not a string: %T", i.Data.Options[0].Value)
 		}
+	} else {
+		h.logger.Error("No command options found: Data=%v", i.Data)
 	}
 
 	if message == "" {

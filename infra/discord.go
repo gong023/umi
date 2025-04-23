@@ -168,8 +168,21 @@ func ConvertInteraction(i *discordgo.InteractionCreate) *domain.InteractionCreat
 		return result
 	}
 
+	// Create the domain ApplicationCommandInteractionData
 	result.Data = &domain.ApplicationCommandInteractionData{
 		Name: data.Name,
+	}
+
+	// Convert options if they exist
+	if len(data.Options) > 0 {
+		options := make([]*domain.ApplicationCommandInteractionDataOption, len(data.Options))
+		for i, opt := range data.Options {
+			options[i] = &domain.ApplicationCommandInteractionDataOption{
+				Name:  opt.Name,
+				Value: opt.Value,
+			}
+		}
+		result.Data.Options = options
 	}
 
 	return result
