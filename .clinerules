@@ -59,7 +59,7 @@ This repository complies with the clean architecture. The levels are usecase -> 
 
 - cmd
   - The main package for the entry. The configs are taken here.
-domain
+- domain
   - The package for the fundamental structure definitions.
   - The shared logic such as logging can also exist.
 - usecase
