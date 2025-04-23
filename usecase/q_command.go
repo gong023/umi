@@ -62,78 +62,73 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 	}
 
 	// Check if a quiz exists
-	contextDir := filepath.Join("memo", "context")
-	files, err := os.ReadDir(contextDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			h.logger.Info("Context directory does not exist, no quiz available")
-			// Send a response indicating that no quiz is available
-			followupMessage := "現在クイズが存在しません。`/create` コマンドで新しいクイズを作成してください。"
-			h.logger.Info("No quiz available, suggesting /create command: %s", followupMessage)
+	contextPath := filepath.Join("memo", "context.txt")
+	quizExists := false
+	var quizContent []byte
+
+	// Check if the context file exists
+	if _, err := os.Stat(contextPath); err == nil {
+		// Read the existing context file
+		quizContent, err = os.ReadFile(contextPath)
+		if err != nil {
+			h.logger.Error("Failed to read context file: %v", err)
 			return
 		}
-		h.logger.Error("Failed to read context directory: %v", err)
-		return
-	}
 
-	// Find the most recent quiz file
-	var latestQuizFile string
-	var latestModTime int64
-	for _, file := range files {
-		if file.IsDir() || !strings.HasPrefix(file.Name(), "quiz_") {
-			continue
-		}
-
-		filePath := filepath.Join(contextDir, file.Name())
-		fileInfo, err := os.Stat(filePath)
-		if err != nil {
-			h.logger.Error("Failed to get file info for %s: %v", filePath, err)
-			continue
-		}
-
-		modTime := fileInfo.ModTime().Unix()
-		if modTime > latestModTime {
-			latestModTime = modTime
-			latestQuizFile = filePath
+		// If the file is not empty, a quiz exists
+		if len(quizContent) > 0 {
+			quizExists = true
 		}
 	}
 
-	if latestQuizFile == "" {
-		h.logger.Info("No quiz file found")
+	if !quizExists {
+		h.logger.Info("No quiz found")
 		// Send a response indicating that no quiz is available
 		followupMessage := "現在クイズが存在しません。`/create` コマンドで新しいクイズを作成してください。"
+
+		// Send the response with the message
+		followupResponse := &domain.InteractionResponse{
+			Type: int(domain.InteractionResponseChannelMessageWithSource),
+			Data: &domain.InteractionResponseData{
+				Content: followupMessage,
+			},
+		}
+
+		if err := s.InteractionRespond(i, followupResponse); err != nil {
+			h.logger.Error("Failed to send follow-up response: %v", err)
+		}
+
 		h.logger.Info("No quiz available, suggesting /create command: %s", followupMessage)
 		return
 	}
 
-	// Read the quiz file
-	quizContent, err := os.ReadFile(latestQuizFile)
-	if err != nil {
-		h.logger.Error("Failed to read quiz file: %v", err)
-		return
-	}
-
 	// Read the prompt file
-	promptPath := filepath.Join("memo", "prompt", "umigame.txt")
+	promptPath := filepath.Join("memo", "prompt", "onQ.txt")
 	promptContent, err := os.ReadFile(promptPath)
 	if err != nil {
 		h.logger.Error("Failed to read prompt file: %v", err)
 		return
 	}
 
-	// Create a request to the OpenAI API
-	req := &domain.ChatCompletionRequest{
-		Model: "gpt-4-turbo",
-		Messages: []domain.ChatMessage{
-			{
-				Role:    "system",
-				Content: string(promptContent) + "\n\nあなたは質問に対して「はい」「いいえ」「わからない/関係ない」のいずれかで答えてください。質問が現在のクイズの解決に関連する場合は、適切な回答を選んでください。質問が現在のクイズの解決に関連しない場合は「わからない/関係ない」と答えてください。",
-			},
-			{
-				Role:    "user",
-				Content: "クイズ: " + string(quizContent) + "\n\n質問: " + message,
-			},
+	// Create a request to the OpenAI API with the conversation history
+	messages := []domain.ChatMessage{
+		{
+			Role:    "system",
+			Content: string(promptContent),
 		},
+		{
+			Role:    "assistant",
+			Content: string(quizContent),
+		},
+		{
+			Role:    "user",
+			Content: "質問: " + message,
+		},
+	}
+
+	req := &domain.ChatCompletionRequest{
+		Model:       "gpt-4-turbo",
+		Messages:    messages,
 		Temperature: 0.7,
 	}
 
@@ -157,13 +152,17 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 	// Format the answer
 	formattedAnswer := fmt.Sprintf("**質問**: %s\n\n**回答**: %s", message, strings.TrimSpace(answer))
 
-	// Create a follow-up message with the answer
-	// Note: In a real implementation, you would need to use the Discord API to send a follow-up message
-	// This is just a placeholder to demonstrate the concept
+	// Send the response with the answer
+	followupResponse := &domain.InteractionResponse{
+		Type: int(domain.InteractionResponseChannelMessageWithSource),
+		Data: &domain.InteractionResponseData{
+			Content: formattedAnswer,
+		},
+	}
+
+	if err := s.InteractionRespond(i, followupResponse); err != nil {
+		h.logger.Error("Failed to send follow-up response: %v", err)
+	}
+
 	h.logger.Info("Answer created: %s", formattedAnswer)
-	
-	// In a real implementation, we would send a follow-up message with the answer
-	// For now, we'll just log it
-	// Example:
-	// discordSession.ChannelMessageSend(channelID, formattedAnswer)
 }
