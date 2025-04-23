@@ -1,11 +1,18 @@
 package domain
 
+type ApplicationCommand struct {
+	Name        string
+	Description string
+}
+
 type DiscordClient interface {
 	Start() error
 	
 	Stop() error
 	
 	RegisterHandler(handler interface{}) func()
+	
+	RegisterCommands(commands []*ApplicationCommand) error
 }
 
 type CommandHandler interface {
@@ -22,6 +29,9 @@ type InteractionCreate struct {
 	Type int
 	
 	Data *ApplicationCommandInteractionData
+	
+	// Original is the original interaction object from the Discord API
+	Original interface{}
 }
 
 type ApplicationCommandInteractionData struct {

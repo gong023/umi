@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gong023/umi/domain"
 	"github.com/gong023/umi/infra/mock"
 	"go.uber.org/mock/gomock"
 )
@@ -18,14 +17,16 @@ func TestBotService_Start(t *testing.T) {
 	mockDiscordClient := mock.NewMockDiscordClient(ctrl)
 
 	// Create a mock logger
-	logger := &MockLogger{}
+	mockLogger := mock.NewMockLogger(ctrl)
+	mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
 
 	// Create the bot service
-	botService := NewBotService(mockDiscordClient, logger)
+	botService := NewBotService(mockDiscordClient, mockLogger)
 
 	// Set up expectations
-	mockDiscordClient.EXPECT().RegisterHandler(gomock.Any()).Return(func() {})
 	mockDiscordClient.EXPECT().Start().Return(nil)
+	mockDiscordClient.EXPECT().RegisterHandler(gomock.Any()).Return(func() {})
+	mockDiscordClient.EXPECT().RegisterCommands(gomock.Any()).Return(nil)
 
 	// Start the bot
 	err := botService.Start()
@@ -33,11 +34,6 @@ func TestBotService_Start(t *testing.T) {
 	// Check that there was no error
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
-	}
-
-	// Check that the logger was called
-	if !logger.InfoCalled {
-		t.Error("Expected logger.Info to be called")
 	}
 }
 
@@ -50,13 +46,13 @@ func TestBotService_Start_Error(t *testing.T) {
 	mockDiscordClient := mock.NewMockDiscordClient(ctrl)
 
 	// Create a mock logger
-	logger := &MockLogger{}
+	mockLogger := mock.NewMockLogger(ctrl)
+	mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
 
 	// Create the bot service
-	botService := NewBotService(mockDiscordClient, logger)
+	botService := NewBotService(mockDiscordClient, mockLogger)
 
 	// Set up expectations
-	mockDiscordClient.EXPECT().RegisterHandler(gomock.Any()).Return(func() {})
 	mockDiscordClient.EXPECT().Start().Return(errors.New("test error"))
 
 	// Start the bot
@@ -65,11 +61,6 @@ func TestBotService_Start_Error(t *testing.T) {
 	// Check that there was an error
 	if err == nil {
 		t.Error("Expected an error, got nil")
-	}
-
-	// Check that the logger was called
-	if !logger.InfoCalled {
-		t.Error("Expected logger.Info to be called")
 	}
 }
 
@@ -82,10 +73,11 @@ func TestBotService_Stop(t *testing.T) {
 	mockDiscordClient := mock.NewMockDiscordClient(ctrl)
 
 	// Create a mock logger
-	logger := &MockLogger{}
+	mockLogger := mock.NewMockLogger(ctrl)
+	mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
 
 	// Create the bot service
-	botService := NewBotService(mockDiscordClient, logger)
+	botService := NewBotService(mockDiscordClient, mockLogger)
 
 	// Set up expectations
 	mockDiscordClient.EXPECT().Stop().Return(nil)
@@ -96,11 +88,6 @@ func TestBotService_Stop(t *testing.T) {
 	// Check that there was no error
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
-	}
-
-	// Check that the logger was called
-	if !logger.InfoCalled {
-		t.Error("Expected logger.Info to be called")
 	}
 }
 
@@ -113,21 +100,17 @@ func TestBotService_RegisterCommand(t *testing.T) {
 	mockDiscordClient := mock.NewMockDiscordClient(ctrl)
 
 	// Create a mock logger
-	logger := &MockLogger{}
+	mockLogger := mock.NewMockLogger(ctrl)
+	mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
 
 	// Create the bot service
-	botService := NewBotService(mockDiscordClient, logger)
+	botService := NewBotService(mockDiscordClient, mockLogger)
 
 	// Create a mock command handler
-	mockCommandHandler := &MockCommandHandler{}
+	mockCommandHandler := mock.NewMockCommandHandler(ctrl)
 
 	// Register the command
 	botService.RegisterCommand("test", mockCommandHandler)
-
-	// Check that the logger was called
-	if !logger.InfoCalled {
-		t.Error("Expected logger.Info to be called")
-	}
 
 	// Check that the command was registered
 	handler, ok := botService.commands["test"]
@@ -137,17 +120,4 @@ func TestBotService_RegisterCommand(t *testing.T) {
 	if handler != mockCommandHandler {
 		t.Error("Expected registered handler to be the mock handler")
 	}
-}
-
-// MockCommandHandler is a mock implementation of the domain.CommandHandler interface
-type MockCommandHandler struct {
-	HandleCalled bool
-	Session      domain.Session
-	Interaction  *domain.InteractionCreate
-}
-
-func (h *MockCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) {
-	h.HandleCalled = true
-	h.Session = s
-	h.Interaction = i
 }

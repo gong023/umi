@@ -23,9 +23,28 @@ func NewBotService(discordClient domain.DiscordClient, logger domain.Logger) *Bo
 func (s *BotService) Start() error {
 	s.logger.Info("Starting bot service")
 	
+	// Start the Discord client first so we have a valid session
+	if err := s.discordClient.Start(); err != nil {
+		return err
+	}
+	
+	// Register the interaction create handler
 	s.discordClient.RegisterHandler(s.handleInteractionCreate)
 	
-	return s.discordClient.Start()
+	// Register commands with Discord API
+	commands := make([]*domain.ApplicationCommand, 0, len(s.commands))
+	for name := range s.commands {
+		commands = append(commands, &domain.ApplicationCommand{
+			Name:        name,
+			Description: name + " command",
+		})
+	}
+	
+	if err := s.discordClient.RegisterCommands(commands); err != nil {
+		return err
+	}
+	
+	return nil
 }
 
 func (s *BotService) Stop() error {
@@ -39,11 +58,24 @@ func (s *BotService) RegisterCommand(name string, handler domain.CommandHandler)
 }
 
 func (s *BotService) handleInteractionCreate(session interface{}, i interface{}) {
+	s.logger.Info("Received interaction event")
+	
 	discordInteraction, ok := i.(*discordgo.InteractionCreate)
 	if !ok {
-		s.logger.Error("Failed to convert interaction to *discordgo.InteractionCreate")
+		s.logger.Error("Failed to convert interaction to *discordgo.InteractionCreate: %T", i)
 		return
 	}
+	
+	s.logger.Info("Interaction type: %d", discordInteraction.Interaction.Type)
+	
+	// Check if this is an application command (slash command)
+	// Type 2 is APPLICATION_COMMAND
+	if discordInteraction.Interaction.Type != discordgo.InteractionType(2) {
+		s.logger.Info("Ignoring non-application command interaction: %d", discordInteraction.Interaction.Type)
+		return
+	}
+	
+	s.logger.Info("Received application command interaction")
 	
 	interaction := infra.ConvertInteraction(discordInteraction)
 	if interaction == nil {
@@ -51,14 +83,17 @@ func (s *BotService) handleInteractionCreate(session interface{}, i interface{})
 		return
 	}
 	
+	s.logger.Info("Converted interaction: ID=%s, Type=%d", interaction.ID, interaction.Type)
+	
 	discordSession := infra.NewSession(session.(*discordgo.Session))
 	
 	if interaction.Data == nil {
-		s.logger.Debug("Interaction is not a command")
+		s.logger.Debug("Interaction is not a command (Data is nil)")
 		return
 	}
 	
 	commandName := interaction.Data.Name
+	s.logger.Info("Command name: %s", commandName)
 	
 	handler, ok := s.commands[commandName]
 	if !ok {
@@ -66,6 +101,7 @@ func (s *BotService) handleInteractionCreate(session interface{}, i interface{})
 		return
 	}
 	
+	s.logger.Info("Found handler for command: %s, calling Handle", commandName)
 	handler.Handle(discordSession, interaction)
 }
 
