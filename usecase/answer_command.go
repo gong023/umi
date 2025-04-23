@@ -265,7 +265,7 @@ func (h *AnswerCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	h.logger.Info("Received judgment: %s", judgment)
 
 	// Check if the answer is correct
-	isCorrect := strings.Contains(judgment, "正解")
+	isCorrect := !strings.Contains(judgment, "不正解")
 
 	// Format the judgment
 	formattedJudgment := fmt.Sprintf("**回答**: %s\n\n**判定**: %s", message, strings.TrimSpace(judgment))
