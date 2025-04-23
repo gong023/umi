@@ -64,20 +64,23 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 	// Check if a quiz exists
 	contextPath := filepath.Join("memo", "context.txt")
 	quizExists := false
-	var quizContent []byte
+	var contextContent []byte
+	var conversationHistory []string
 
 	// Check if the context file exists
 	if _, err := os.Stat(contextPath); err == nil {
 		// Read the existing context file
-		quizContent, err = os.ReadFile(contextPath)
+		contextContent, err = os.ReadFile(contextPath)
 		if err != nil {
 			h.logger.Error("Failed to read context file: %v", err)
 			return
 		}
 
 		// If the file is not empty, a quiz exists
-		if len(quizContent) > 0 {
+		if len(contextContent) > 0 {
 			quizExists = true
+			// Split the content by new lines to get the conversation history
+			conversationHistory = strings.Split(string(contextContent), "\n")
 		}
 	}
 
@@ -116,15 +119,21 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 			Role:    "system",
 			Content: string(promptContent),
 		},
-		{
-			Role:    "assistant",
-			Content: string(quizContent),
-		},
-		{
-			Role:    "user",
-			Content: "質問: " + message,
-		},
 	}
+
+	// Add the quiz (first line of the conversation history)
+	if len(conversationHistory) > 0 {
+		messages = append(messages, domain.ChatMessage{
+			Role:    "assistant",
+			Content: conversationHistory[0],
+		})
+	}
+
+	// Add the current question
+	messages = append(messages, domain.ChatMessage{
+		Role:    "user",
+		Content: "質問: " + message,
+	})
 
 	req := &domain.ChatCompletionRequest{
 		Model:       "gpt-4-turbo",
@@ -151,6 +160,28 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 
 	// Format the answer
 	formattedAnswer := fmt.Sprintf("**質問**: %s\n\n**回答**: %s", message, strings.TrimSpace(answer))
+
+	// Append the answer to the context file
+	// First, read the existing content
+	existingContent := ""
+	if len(contextContent) > 0 {
+		existingContent = string(contextContent)
+	}
+
+	// Append the new answer with a newline
+	updatedContent := existingContent
+	if len(updatedContent) > 0 && !strings.HasSuffix(updatedContent, "\n") {
+		updatedContent += "\n"
+	}
+	updatedContent += answer
+
+	// Write the updated content back to the context file
+	if err := os.WriteFile(contextPath, []byte(updatedContent), 0644); err != nil {
+		h.logger.Error("Failed to update context file: %v", err)
+		// Continue with the response even if we fail to update the context file
+	} else {
+		h.logger.Info("Updated context file with new answer")
+	}
 
 	// Send the response with the answer
 	followupResponse := &domain.InteractionResponse{
