@@ -22,5 +22,4 @@ go.work
 .vscode/
 
 # Bot memory files
-memo/*
-!memo/.gitkeep
+memo/context.txt
