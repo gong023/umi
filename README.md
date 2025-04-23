@@ -1,3 +1,5 @@
+note: this repository is mostly written by AI.
+
 # ウミガメのスープ Discord Bot
 
 This is a Discord bot for the ウミガメのスープ (Umigame no Soup) quiz game.
