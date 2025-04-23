@@ -8,13 +8,15 @@ import (
 
 type BotService struct {
 	discordClient domain.DiscordClient
+	openaiClient  domain.OpenAIClient
 	logger        domain.Logger
 	commands      map[string]domain.CommandHandler
 }
 
-func NewBotService(discordClient domain.DiscordClient, logger domain.Logger) *BotService {
+func NewBotService(discordClient domain.DiscordClient, openaiClient domain.OpenAIClient, logger domain.Logger) *BotService {
 	return &BotService{
 		discordClient: discordClient,
+		openaiClient:  openaiClient,
 		logger:        logger,
 		commands:      make(map[string]domain.CommandHandler),
 	}

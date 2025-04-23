@@ -20,17 +20,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	openaiAPIKey := os.Getenv("OPENAI_API_KEY")
+	if openaiAPIKey == "" {
+		logger.Error("OPENAI_API_KEY environment variable is not set")
+		os.Exit(1)
+	}
+
 	discordClient, err := infra.NewDiscordClient(token, logger)
 	if err != nil {
 		logger.Error("Failed to create Discord client: %v", err)
 		os.Exit(1)
 	}
 
-	botService := usecase.NewBotService(discordClient, logger)
+	openaiClient := infra.NewOpenAIClient(openaiAPIKey, logger)
+
+	botService := usecase.NewBotService(discordClient, openaiClient, logger)
 
 	pingCommandHandler := usecase.NewPingCommandHandler(logger)
+	quizCommandHandler := usecase.NewQuizCommandHandler(openaiClient, logger)
 
 	botService.RegisterCommand("ping", pingCommandHandler)
+	botService.RegisterCommand("quiz", quizCommandHandler)
 
 	if err := botService.Start(); err != nil {
 		logger.Error("Failed to start bot: %v", err)

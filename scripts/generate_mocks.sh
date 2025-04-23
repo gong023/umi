@@ -17,4 +17,7 @@ mockgen -destination=infra/mock/session.go -package=mock github.com/gong023/umi/
 # Generate mock for Logger
 mockgen -destination=infra/mock/logger.go -package=mock github.com/gong023/umi/domain Logger
 
+# Generate mock for OpenAIClient
+mockgen -destination=infra/mock/openai.go -package=mock github.com/gong023/umi/domain OpenAIClient
+
 echo "Mock files generated successfully"

@@ -16,12 +16,15 @@ func TestBotService_Start(t *testing.T) {
 	// Create a mock Discord client
 	mockDiscordClient := mock.NewMockDiscordClient(ctrl)
 
+	// Create a mock OpenAI client
+	mockOpenAIClient := mock.NewMockOpenAIClient(ctrl)
+
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
 	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create the bot service
-	botService := NewBotService(mockDiscordClient, mockLogger)
+	botService := NewBotService(mockDiscordClient, mockOpenAIClient, mockLogger)
 
 	// Set up expectations
 	mockDiscordClient.EXPECT().Start().Return(nil)
@@ -45,12 +48,15 @@ func TestBotService_Start_Error(t *testing.T) {
 	// Create a mock Discord client
 	mockDiscordClient := mock.NewMockDiscordClient(ctrl)
 
+	// Create a mock OpenAI client
+	mockOpenAIClient := mock.NewMockOpenAIClient(ctrl)
+
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
 	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create the bot service
-	botService := NewBotService(mockDiscordClient, mockLogger)
+	botService := NewBotService(mockDiscordClient, mockOpenAIClient, mockLogger)
 
 	// Set up expectations
 	mockDiscordClient.EXPECT().Start().Return(errors.New("test error"))
@@ -72,12 +78,15 @@ func TestBotService_Stop(t *testing.T) {
 	// Create a mock Discord client
 	mockDiscordClient := mock.NewMockDiscordClient(ctrl)
 
+	// Create a mock OpenAI client
+	mockOpenAIClient := mock.NewMockOpenAIClient(ctrl)
+
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
 	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create the bot service
-	botService := NewBotService(mockDiscordClient, mockLogger)
+	botService := NewBotService(mockDiscordClient, mockOpenAIClient, mockLogger)
 
 	// Set up expectations
 	mockDiscordClient.EXPECT().DeleteCommands().Return(nil)
@@ -100,13 +109,16 @@ func TestBotService_Stop_DeleteCommandsError(t *testing.T) {
 	// Create a mock Discord client
 	mockDiscordClient := mock.NewMockDiscordClient(ctrl)
 
+	// Create a mock OpenAI client
+	mockOpenAIClient := mock.NewMockOpenAIClient(ctrl)
+
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
 	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 	mockLogger.EXPECT().Error(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create the bot service
-	botService := NewBotService(mockDiscordClient, mockLogger)
+	botService := NewBotService(mockDiscordClient, mockOpenAIClient, mockLogger)
 
 	// Set up expectations
 	mockDiscordClient.EXPECT().DeleteCommands().Return(errors.New("delete commands error"))
@@ -129,12 +141,15 @@ func TestBotService_RegisterCommand(t *testing.T) {
 	// Create a mock Discord client
 	mockDiscordClient := mock.NewMockDiscordClient(ctrl)
 
+	// Create a mock OpenAI client
+	mockOpenAIClient := mock.NewMockOpenAIClient(ctrl)
+
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
 	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create the bot service
-	botService := NewBotService(mockDiscordClient, mockLogger)
+	botService := NewBotService(mockDiscordClient, mockOpenAIClient, mockLogger)
 
 	// Create a mock command handler
 	mockCommandHandler := mock.NewMockCommandHandler(ctrl)
