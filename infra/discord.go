@@ -43,9 +43,24 @@ func (c *DiscordClient) RegisterCommands(commands []*domain.ApplicationCommand) 
 	c.logger.Info("Registering %d commands", len(commands))
 
 	for _, cmd := range commands {
+		var options []*discordgo.ApplicationCommandOption
+
+		// Add appropriate options based on the command name
+		switch cmd.Name {
+		case "q", "answer":
+			// Add a string option for the question/answer
+			options = append(options, &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "message",
+				Description: "The message to send",
+				Required:    true,
+			})
+		}
+
 		_, err := c.session.ApplicationCommandCreate(c.session.State.User.ID, "", &discordgo.ApplicationCommand{
 			Name:        cmd.Name,
 			Description: cmd.Description,
+			Options:     options,
 		})
 
 		if err != nil {
@@ -159,30 +174,27 @@ func ConvertInteraction(i *discordgo.InteractionCreate) *domain.InteractionCreat
 		Original: i, // Store the entire InteractionCreate object
 	}
 
-	if i.Interaction.Data == nil {
-		return result
-	}
+	// Check if this is an application command interaction
+	if i.Type == discordgo.InteractionApplicationCommand {
+		// Get the application command data directly from the interaction
+		data := i.ApplicationCommandData()
 
-	data, ok := i.Interaction.Data.(*discordgo.ApplicationCommandInteractionData)
-	if !ok {
-		return result
-	}
-
-	// Create the domain ApplicationCommandInteractionData
-	result.Data = &domain.ApplicationCommandInteractionData{
-		Name: data.Name,
-	}
-
-	// Convert options if they exist
-	if len(data.Options) > 0 {
-		options := make([]*domain.ApplicationCommandInteractionDataOption, len(data.Options))
-		for i, opt := range data.Options {
-			options[i] = &domain.ApplicationCommandInteractionDataOption{
-				Name:  opt.Name,
-				Value: opt.Value,
-			}
+		// Create the domain ApplicationCommandInteractionData
+		result.Data = &domain.ApplicationCommandInteractionData{
+			Name: data.Name,
 		}
-		result.Data.Options = options
+
+		// Convert options if they exist
+		if len(data.Options) > 0 {
+			options := make([]*domain.ApplicationCommandInteractionDataOption, len(data.Options))
+			for j, opt := range data.Options {
+				options[j] = &domain.ApplicationCommandInteractionDataOption{
+					Name:  opt.Name,
+					Value: opt.Value,
+				}
+			}
+			result.Data.Options = options
+		}
 	}
 
 	return result

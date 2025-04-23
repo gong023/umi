@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/gong023/umi/domain"
 )
 
@@ -26,8 +27,51 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 
 	// Extract the message from the command options
 	var message string
-	if i.Data != nil && len(i.Data.Options) > 0 {
-		h.logger.Info("Command options found: %d options", len(i.Data.Options))
+
+	// Log the entire interaction data for debugging
+	h.logger.Info("Interaction data: %+v", i)
+
+	// Check if the interaction data contains the message directly
+	if i.Original != nil {
+		originalInteraction, ok := i.Original.(*discordgo.InteractionCreate)
+		if ok {
+			h.logger.Info("Original interaction: %+v", originalInteraction)
+
+			// Try to get the command data
+			if originalInteraction.Type == discordgo.InteractionApplicationCommand {
+				data := originalInteraction.ApplicationCommandData()
+				h.logger.Info("Application command data: %+v", data)
+
+				// Check if there are options
+				if len(data.Options) > 0 {
+					h.logger.Info("Command options found: %d options", len(data.Options))
+					for idx, opt := range data.Options {
+						h.logger.Info("Option %d: Name=%s, Value=%v", idx, opt.Name, opt.Value)
+					}
+
+					// Try to extract the message from the options
+					for _, opt := range data.Options {
+						if opt.Name == "message" {
+							if val, ok := opt.Value.(string); ok {
+								message = val
+								h.logger.Info("Extracted question from user: %s", message)
+							} else {
+								h.logger.Error("Failed to extract question: Value is not a string: %T", opt.Value)
+							}
+							break
+						}
+					}
+				} else {
+					h.logger.Error("No options found in ApplicationCommandData")
+				}
+			} else {
+				h.logger.Error("Interaction is not an ApplicationCommand: %d", originalInteraction.Type)
+			}
+		} else {
+			h.logger.Error("Original interaction is not of type *discordgo.InteractionCreate: %T", i.Original)
+		}
+	} else if i.Data != nil && len(i.Data.Options) > 0 {
+		h.logger.Info("Command options found in domain model: %d options", len(i.Data.Options))
 		for idx, opt := range i.Data.Options {
 			h.logger.Info("Option %d: Name=%s, Value=%v", idx, opt.Name, opt.Value)
 		}
