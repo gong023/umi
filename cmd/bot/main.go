@@ -36,13 +36,25 @@ func main() {
 
 	botService := usecase.NewBotService(discordClient, openaiClient, logger)
 
+	// Create command handlers
 	pingCommandHandler := usecase.NewPingCommandHandler(logger)
 	createCommandHandler := usecase.NewCreateCommandHandler(openaiClient, logger)
 	qCommandHandler := usecase.NewQCommandHandler(openaiClient, logger)
+	answerCommandHandler := usecase.NewAnswerCommandHandler(openaiClient, logger)
+	infoCommandHandler := usecase.NewInfoCommandHandler(openaiClient, logger)
+	clueCommandHandler := usecase.NewClueCommandHandler(openaiClient, logger)
+	quitCommandHandler := usecase.NewQuitCommandHandler(logger)
+	helpCommandHandler := usecase.NewHelpCommandHandler(logger)
 
+	// Register commands
 	botService.RegisterCommand("ping", pingCommandHandler)
 	botService.RegisterCommand("create", createCommandHandler)
 	botService.RegisterCommand("q", qCommandHandler)
+	botService.RegisterCommand("answer", answerCommandHandler)
+	botService.RegisterCommand("info", infoCommandHandler)
+	botService.RegisterCommand("clue", clueCommandHandler)
+	botService.RegisterCommand("quit", quitCommandHandler)
+	botService.RegisterCommand("help", helpCommandHandler)
 
 	if err := botService.Start(); err != nil {
 		logger.Error("Failed to start bot: %v", err)
