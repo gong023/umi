@@ -1,0 +1,79 @@
+This is a server for the discord bot.
+
+# Spec of bot
+
+## Principals
+
+- The users of this bot enjoy ウミガメのスープ qiuz interacting with this bot.
+- The bot and users have conversation in Japanese.
+- The bot server memorizes only one quiz at most.
+
+## Commands
+
+- /create
+  - The bot asks LLM to create a new quiz and memorizes it.
+  - If the quiz already exists, this bot returns the current quiz, and also introduces the users /quit command to exit the current quiz.
+- /q $message
+  - About $message, the bot returns the answers from LLM.
+     - The LLM answer is supposed to be categorized to "はい","いいえ", or "わからない/関係ない" about the current quiz.
+  - If the current quiz does not exist, this bot introduces the /create command.
+- /answer $message
+  - About $message, the bot returns the answers from LLM.
+     - The LLM answer is supposed to be categorized to "正解" or "不正解" about the current quiz.
+  - If the LLM judges the quiz is solved, the current quiz memory is cleaned.
+  - If the current quiz does not exist, this bot introduces the /create command.
+- /info
+  - The bot asks LLM to summarize the current quiz and its details which clarified by the users' questions.
+  - If the current quiz does not exist, the bot introduces the /create command
+- /clue
+  - The bot asks LLM a clue about the current quiz.
+- /quit
+  - The bot cleans the memory about the current question.
+  - If the current quiz does not exist, the bot does nothing.
+- /ping
+  - The bot reponses just "はい!". No the other actions like requesting OpenAI api and searching memory.
+- /help
+  - The bot lists how to use the all commands.
+
+# Tech stack
+
+- golang
+  - github.com/bwmarrin/discordgo
+  - go.uber.org/mock
+- OpenAI API
+  - ChatGPT-4/Turbo
+- github actions
+
+# Tech spec overview
+
+- The bot serves the websocket gateway.
+- The bot is an agent for the OpenAI. So that the core thought about the quiz is in OpenAI side.
+- The bot server takes configs such as API keys from the environment variables.
+- The bot can uses local text files as memories.
+  - The bot can create the multiple files and directories as necessary.
+- This repository should run the tests and lints when the pull requests are created and pushed to main branch.
+
+# Directories
+
+This repository complies with the clean architecture. The levels are usecase -> infra -> domain. The lower level must not depend on the upper level. The upper level can depend on the lower level and the upper level can skip the level as necessary (ex: usecase can depend on domain).
+
+- cmd
+  - The main package for the entry. The configs are taken here.
+domain
+  - The package for the fundamental structure definitions.
+  - The shared logic such as logging can also exist.
+- usecase
+  - The package for the core logic.
+  - There should be test files. In the tests, the dependencies for the infra package should be mocked.
+- infra
+  - The package for the external dependencies over tcp/ip such as OpenAI and discord APIs.
+  - The mocks should be created by go.uber.org/mock are in infra/mock.
+- .github
+  - The files for github actions
+- memo
+  - The files for the bot memories and prompts.
+  - This directory should be .gitkeep and the other memory files should be .gitignore.
+
+# Coding styles
+
+- No need comments unless the functions are too complicated(^50 lines) or need context on the background.
