@@ -38,9 +38,11 @@ func main() {
 
 	pingCommandHandler := usecase.NewPingCommandHandler(logger)
 	createCommandHandler := usecase.NewCreateCommandHandler(openaiClient, logger)
+	qCommandHandler := usecase.NewQCommandHandler(openaiClient, logger)
 
 	botService.RegisterCommand("ping", pingCommandHandler)
 	botService.RegisterCommand("create", createCommandHandler)
+	botService.RegisterCommand("q", qCommandHandler)
 
 	if err := botService.Start(); err != nil {
 		logger.Error("Failed to start bot: %v", err)

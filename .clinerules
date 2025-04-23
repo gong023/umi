@@ -8,6 +8,33 @@ This is a server for the discord bot.
 - The bot and users have conversation in Japanese.
 - The bot server memorizes only one quiz at most.
 
+## Commands
+
+- /create
+  - The bot asks LLM to create a new quiz and memorizes it.
+  - If the quiz already exists, this bot returns the current quiz, and also introduces the users /quit command to exit the current quiz.
+- /q $message
+  - About $message, the bot returns the answers from LLM.
+     - The LLM answer is supposed to be categorized to "はい","いいえ", or "わからない/関係ない" about the current quiz.
+  - If the current quiz does not exist, this bot introduces the /create command.
+- /answer $message
+  - About $message, the bot returns the answers from LLM.
+     - The LLM answer is supposed to be categorized to "正解" or "不正解" about the current quiz.
+  - If the LLM judges the quiz is solved, the current quiz memory is cleaned.
+  - If the current quiz does not exist, this bot introduces the /create command.
+- /info
+  - The bot asks LLM to summarize the current quiz and its details which clarified by the users' questions.
+  - If the current quiz does not exist, the bot introduces the /create command
+- /clue
+  - The bot asks LLM a clue about the current quiz.
+- /quit
+  - The bot cleans the memory about the current question.
+  - If the current quiz does not exist, the bot does nothing.
+- /ping
+  - The bot reponses just "はい!". No the other actions like requesting OpenAI api and searching memory.
+- /help
+  - The bot lists how to use the all commands.
+
 # Tech stack
 
 - golang
@@ -21,6 +48,10 @@ This is a server for the discord bot.
 
 - The bot serves the websocket gateway.
 - The bot is an agent for the OpenAI. So that the core thought about the quiz is in OpenAI side.
+  - The conversation is saved in memo/context.
+  - When /create command is called, request prompt in memo/prompt to OpenAI and save their response. 
+  - When /q, /answer, /info, and /clue are called, all the conversation history should be passed to OpenAI and append their response.
+  - When /quit is called, delete all the conversation history.
 - The bot server takes configs such as API keys from the environment variables.
 - The bot can uses local text files as memories.
   - The bot can create the multiple files and directories as necessary.
