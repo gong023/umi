@@ -2,7 +2,7 @@ package domain
 
 type BotService interface {
 	Start() error
-	
+
 	Stop() error
 }
 

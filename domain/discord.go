@@ -7,13 +7,13 @@ type ApplicationCommand struct {
 
 type DiscordClient interface {
 	Start() error
-	
+
 	Stop() error
-	
+
 	RegisterHandler(handler interface{}) func()
-	
+
 	RegisterCommands(commands []*ApplicationCommand) error
-	
+
 	DeleteCommands() error
 }
 
@@ -27,30 +27,30 @@ type Session interface {
 
 type InteractionCreate struct {
 	ID string
-	
+
 	Type int
-	
+
 	Data *ApplicationCommandInteractionData
-	
+
 	// Original is the original interaction object from the Discord API
 	Original interface{}
 }
 
 type ApplicationCommandInteractionData struct {
 	Name string
-	
+
 	Options []*ApplicationCommandInteractionDataOption
 }
 
 type ApplicationCommandInteractionDataOption struct {
 	Name string
-	
+
 	Value interface{}
 }
 
 type InteractionResponse struct {
 	Type int
-	
+
 	Data *InteractionResponseData
 }
 

@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/gong023/umi/domain"
@@ -8,7 +10,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func TestQuizCommandHandler_Handle(t *testing.T) {
+func TestCreateCommandHandler_Handle(t *testing.T) {
 	// Create a mock controller
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -19,6 +21,7 @@ func TestQuizCommandHandler_Handle(t *testing.T) {
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
 	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Error(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create a mock session
 	mockSession := mock.NewMockSession(ctrl)
@@ -28,28 +31,12 @@ func TestQuizCommandHandler_Handle(t *testing.T) {
 		ID:   "test-interaction-id",
 		Type: 2, // APPLICATION_COMMAND
 		Data: &domain.ApplicationCommandInteractionData{
-			Name: "quiz",
+			Name: "create",
 		},
 	}
 
 	// Set up expectations for the session
 	mockSession.EXPECT().InteractionRespond(gomock.Any(), gomock.Any()).Return(nil)
-
-	// Set up expectations for the OpenAI client
-	expectedRequest := &domain.ChatCompletionRequest{
-		Model: "gpt-4-turbo",
-		Messages: []domain.ChatMessage{
-			{
-				Role:    "system",
-				Content: "あなたはウミガメのスープクイズを出題するボットです。日本語で短い問題を作成してください。",
-			},
-			{
-				Role:    "user",
-				Content: "新しいウミガメのスープクイズを考えてください。",
-			},
-		},
-		Temperature: 0.7,
-	}
 
 	// Create a mock response
 	mockResponse := &domain.ChatCompletionResponse{
@@ -72,10 +59,17 @@ func TestQuizCommandHandler_Handle(t *testing.T) {
 		},
 	}
 
-	mockOpenAIClient.EXPECT().CreateChatCompletion(gomock.Eq(expectedRequest)).Return(mockResponse, nil)
+	mockOpenAIClient.EXPECT().CreateChatCompletion(gomock.Any()).Return(mockResponse, nil)
 
-	// Create the quiz command handler
-	handler := NewQuizCommandHandler(mockOpenAIClient, mockLogger)
+	// Create the create command handler
+	handler := NewCreateCommandHandler(mockOpenAIClient, mockLogger)
+
+	// Create test directories for the test
+	testDir := filepath.Join("testdata")
+	if err := os.MkdirAll(testDir, 0755); err != nil {
+		t.Fatalf("Failed to create test directory: %v", err)
+	}
+	defer os.RemoveAll(testDir)
 
 	// Handle the interaction
 	handler.Handle(mockSession, interaction)

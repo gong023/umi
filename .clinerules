@@ -45,7 +45,7 @@ This repository complies with the clean architecture. The levels are usecase -> 
   - The files for github actions
 - memo
   - The local files for the bot. It consists of memories and prompts.
-  - memo/quiz
+  - memo/context
     - The directory for the quiz memories. Only the bot are supposed to create or update the files.
     - This directory should be .gitkeep and the other memory files should be .gitignore.
   - memo/prompt

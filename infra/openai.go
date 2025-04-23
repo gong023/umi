@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	openAIAPIBaseURL = "https://api.openai.com/v1"
+	openAIAPIBaseURL        = "https://api.openai.com/v1"
 	chatCompletionsEndpoint = "/chat/completions"
 )
 
@@ -37,7 +37,7 @@ func NewOpenAIClient(apiKey string, logger domain.Logger) *OpenAIClient {
 // CreateChatCompletion sends a request to the OpenAI chat completions API
 func (c *OpenAIClient) CreateChatCompletion(req *domain.ChatCompletionRequest) (*domain.ChatCompletionResponse, error) {
 	c.logger.Info("Sending request to OpenAI chat completions API")
-	
+
 	// Convert the request to JSON
 	jsonData, err := json.Marshal(req)
 	if err != nil {
