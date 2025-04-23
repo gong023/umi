@@ -18,7 +18,7 @@ func TestBotService_Start(t *testing.T) {
 
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
-	mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create the bot service
 	botService := NewBotService(mockDiscordClient, mockLogger)
@@ -47,7 +47,7 @@ func TestBotService_Start_Error(t *testing.T) {
 
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
-	mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create the bot service
 	botService := NewBotService(mockDiscordClient, mockLogger)
@@ -74,7 +74,7 @@ func TestBotService_Stop(t *testing.T) {
 
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
-	mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create the bot service
 	botService := NewBotService(mockDiscordClient, mockLogger)
@@ -102,7 +102,7 @@ func TestBotService_Stop_DeleteCommandsError(t *testing.T) {
 
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
-	mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 	mockLogger.EXPECT().Error(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create the bot service
@@ -131,7 +131,7 @@ func TestBotService_RegisterCommand(t *testing.T) {
 
 	// Create a mock logger
 	mockLogger := mock.NewMockLogger(ctrl)
-	mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create the bot service
 	botService := NewBotService(mockDiscordClient, mockLogger)
