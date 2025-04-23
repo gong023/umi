@@ -97,10 +97,10 @@ func NewSession(session *discordgo.Session) *Session {
 func (s *Session) InteractionRespond(i *domain.InteractionCreate, r *domain.InteractionResponse) error {
 	// Use the original interaction if available
 	if i.Original != nil {
-		originalInteraction, ok := i.Original.(*discordgo.Interaction)
+		originalInteractionCreate, ok := i.Original.(*discordgo.InteractionCreate)
 		if ok {
 			// Log the original interaction details
-			s.logger.Info("Using original interaction: ID=%s, Type=%d", originalInteraction.ID, originalInteraction.Type)
+			s.logger.Info("Using original InteractionCreate: ID=%s, Type=%d", originalInteractionCreate.Interaction.ID, originalInteractionCreate.Interaction.Type)
 			
 			// Create the response
 			response := &discordgo.InteractionResponse{
@@ -114,13 +114,13 @@ func (s *Session) InteractionRespond(i *domain.InteractionCreate, r *domain.Inte
 			s.logger.Info("Sending response: Type=%d, Content=%s", response.Type, response.Data.Content)
 			
 			// Send the response
-			err := s.session.InteractionRespond(originalInteraction, response)
+			err := s.session.InteractionRespond(originalInteractionCreate.Interaction, response)
 			if err != nil {
 				s.logger.Error("Failed to respond to interaction: %v", err)
 			}
 			return err
 		} else {
-			s.logger.Error("Original interaction is not of type *discordgo.Interaction: %T", i.Original)
+			s.logger.Error("Original interaction is not of type *discordgo.InteractionCreate: %T", i.Original)
 		}
 	} else {
 		s.logger.Info("No original interaction available, falling back to creating a new one")
@@ -165,7 +165,7 @@ func ConvertInteraction(i *discordgo.InteractionCreate) *domain.InteractionCreat
 	result := &domain.InteractionCreate{
 		ID:       i.Interaction.ID,
 		Type:     int(i.Interaction.Type),
-		Original: i.Interaction, // Store the original interaction
+		Original: i, // Store the entire InteractionCreate object
 	}
 
 	if i.Interaction.Data == nil {

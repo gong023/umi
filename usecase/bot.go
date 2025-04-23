@@ -29,7 +29,10 @@ func (s *BotService) Start() error {
 	}
 	
 	// Register the interaction create handler
-	s.discordClient.RegisterHandler(s.handleInteractionCreate)
+	// Use a function that matches the expected signature for discordgo handlers
+	s.discordClient.RegisterHandler(func(session *discordgo.Session, i *discordgo.InteractionCreate) {
+		s.handleInteractionCreate(session, i)
+	})
 	
 	// Register commands with Discord API
 	commands := make([]*domain.ApplicationCommand, 0, len(s.commands))
