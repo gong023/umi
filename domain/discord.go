@@ -13,6 +13,8 @@ type DiscordClient interface {
 	RegisterHandler(handler interface{}) func()
 	
 	RegisterCommands(commands []*ApplicationCommand) error
+	
+	DeleteCommands() error
 }
 
 type CommandHandler interface {

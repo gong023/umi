@@ -57,6 +57,31 @@ func (c *DiscordClient) RegisterCommands(commands []*domain.ApplicationCommand) 
 	return nil
 }
 
+func (c *DiscordClient) DeleteCommands() error {
+	c.logger.Info("Deleting all commands")
+	
+	// Get all the commands
+	commands, err := c.session.ApplicationCommands(c.session.State.User.ID, "")
+	if err != nil {
+		c.logger.Error("Failed to get commands: %v", err)
+		return err
+	}
+	
+	c.logger.Info("Found %d commands to delete", len(commands))
+	
+	// Delete each command
+	for _, cmd := range commands {
+		c.logger.Info("Deleting command: %s", cmd.Name)
+		err := c.session.ApplicationCommandDelete(c.session.State.User.ID, "", cmd.ID)
+		if err != nil {
+			c.logger.Error("Failed to delete command %s: %v", cmd.Name, err)
+			return err
+		}
+	}
+	
+	return nil
+}
+
 type Session struct {
 	session *discordgo.Session
 	logger  domain.Logger

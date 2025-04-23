@@ -49,6 +49,15 @@ func (s *BotService) Start() error {
 
 func (s *BotService) Stop() error {
 	s.logger.Info("Stopping bot service")
+	
+	// Delete all commands
+	s.logger.Info("Deleting all commands")
+	if err := s.discordClient.DeleteCommands(); err != nil {
+		s.logger.Error("Failed to delete commands: %v", err)
+		// Continue with shutdown even if command deletion fails
+	}
+	
+	// Stop the Discord client
 	return s.discordClient.Stop()
 }
 

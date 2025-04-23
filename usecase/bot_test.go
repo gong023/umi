@@ -80,12 +80,42 @@ func TestBotService_Stop(t *testing.T) {
 	botService := NewBotService(mockDiscordClient, mockLogger)
 
 	// Set up expectations
+	mockDiscordClient.EXPECT().DeleteCommands().Return(nil)
 	mockDiscordClient.EXPECT().Stop().Return(nil)
 
 	// Stop the bot
 	err := botService.Stop()
 
 	// Check that there was no error
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+}
+
+func TestBotService_Stop_DeleteCommandsError(t *testing.T) {
+	// Create a mock controller
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Create a mock Discord client
+	mockDiscordClient := mock.NewMockDiscordClient(ctrl)
+
+	// Create a mock logger
+	mockLogger := mock.NewMockLogger(ctrl)
+	mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Error(gomock.Any(), gomock.Any()).AnyTimes()
+
+	// Create the bot service
+	botService := NewBotService(mockDiscordClient, mockLogger)
+
+	// Set up expectations
+	mockDiscordClient.EXPECT().DeleteCommands().Return(errors.New("delete commands error"))
+	mockDiscordClient.EXPECT().Stop().Return(nil)
+
+	// Stop the bot
+	err := botService.Stop()
+
+	// Check that there was no error (we continue even if DeleteCommands fails)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

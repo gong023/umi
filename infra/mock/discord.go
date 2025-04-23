@@ -38,6 +38,20 @@ func (m *MockDiscordClient) EXPECT() *MockDiscordClientMockRecorder {
 	return m.recorder
 }
 
+// DeleteCommands mocks base method.
+func (m *MockDiscordClient) DeleteCommands() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteCommands")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteCommands indicates an expected call of DeleteCommands.
+func (mr *MockDiscordClientMockRecorder) DeleteCommands() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCommands", reflect.TypeOf((*MockDiscordClient)(nil).DeleteCommands))
+}
+
 // RegisterCommands mocks base method.
 func (m *MockDiscordClient) RegisterCommands(arg0 []*domain.ApplicationCommand) error {
 	m.ctrl.T.Helper()
