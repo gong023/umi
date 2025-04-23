@@ -10,24 +10,6 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// mockFilepathHandler is a helper struct to handle filepath operations in tests
-type mockFilepathHandler struct {
-	tempDir string
-}
-
-func newMockFilepathHandler(tempDir string) *mockFilepathHandler {
-	return &mockFilepathHandler{
-		tempDir: tempDir,
-	}
-}
-
-func (h *mockFilepathHandler) join(elem ...string) string {
-	if len(elem) > 0 && elem[0] == "memo" {
-		return filepath.Join(append([]string{h.tempDir}, elem...)...)
-	}
-	return filepath.Join(elem...)
-}
-
 func TestQCommandHandler_Handle(t *testing.T) {
 	// Create a mock controller
 	ctrl := gomock.NewController(t)
@@ -64,10 +46,10 @@ func TestQCommandHandler_Handle(t *testing.T) {
 
 	// Create a temporary directory for testing
 	tempDir := t.TempDir()
-	fpHandler := newMockFilepathHandler(tempDir)
-	
-	contextDir := fpHandler.join("memo", "context")
-	promptDir := fpHandler.join("memo", "prompt")
+	fpHandler := NewMockFilepathHandler(tempDir)
+
+	contextDir := fpHandler.Join("memo", "context")
+	promptDir := fpHandler.Join("memo", "prompt")
 
 	// Create the directories
 	if err := os.MkdirAll(contextDir, 0755); err != nil {

@@ -29,7 +29,7 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	response := &domain.InteractionResponse{
 		Type: int(domain.InteractionResponseChannelMessageWithSource),
 		Data: &domain.InteractionResponseData{
-			Content: "クイズを考えています...",
+			Content: "クイズを確認しています...",
 		},
 	}
 
@@ -38,6 +38,59 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 		h.logger.Error("Failed to respond to interaction: %v", err)
 		return
 	}
+
+	// Check if a quiz already exists
+	contextDir := filepath.Join("memo", "context")
+	files, err := os.ReadDir(contextDir)
+	if err != nil && !os.IsNotExist(err) {
+		h.logger.Error("Failed to read context directory: %v", err)
+		return
+	}
+
+	// Find the most recent quiz file
+	var latestQuizFile string
+	var latestModTime int64
+	if err == nil { // Directory exists
+		for _, file := range files {
+			if file.IsDir() || !strings.HasPrefix(file.Name(), "quiz_") {
+				continue
+			}
+
+			filePath := filepath.Join(contextDir, file.Name())
+			fileInfo, err := os.Stat(filePath)
+			if err != nil {
+				h.logger.Error("Failed to get file info for %s: %v", filePath, err)
+				continue
+			}
+
+			modTime := fileInfo.ModTime().Unix()
+			if modTime > latestModTime {
+				latestModTime = modTime
+				latestQuizFile = filePath
+			}
+		}
+	}
+
+	// If a quiz already exists, return it and introduce the /quit command
+	if latestQuizFile != "" {
+		h.logger.Info("Quiz already exists: %s", latestQuizFile)
+
+		// Read the existing quiz
+		quizContent, err := os.ReadFile(latestQuizFile)
+		if err != nil {
+			h.logger.Error("Failed to read quiz file: %v", err)
+			return
+		}
+
+		// Format the response with the existing quiz and introduce the /quit command
+		formattedResponse := fmt.Sprintf("**現在のウミガメのスープクイズ**\n\n%s\n\n現在のクイズを終了するには `/quit` コマンドを使用してください。", strings.TrimSpace(string(quizContent)))
+
+		h.logger.Info("Returning existing quiz: %s", formattedResponse)
+		return
+	}
+
+	// No existing quiz, create a new one
+	h.logger.Info("No existing quiz found, creating a new one")
 
 	// Read the prompt file
 	promptPath := filepath.Join("memo", "prompt", "umigame.txt")
@@ -80,14 +133,15 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	quiz := resp.Choices[0].Message.Content
 	h.logger.Info("Received quiz: %s", quiz)
 
-	// Save the quiz to the context directory
-	timestamp := time.Now().Format("20060102_150405")
-	contextPath := filepath.Join("memo", "context", fmt.Sprintf("quiz_%s.txt", timestamp))
-
-	if err := os.MkdirAll(filepath.Dir(contextPath), 0755); err != nil {
+	// Create the context directory if it doesn't exist
+	if err := os.MkdirAll(contextDir, 0755); err != nil {
 		h.logger.Error("Failed to create context directory: %v", err)
 		return
 	}
+
+	// Save the quiz to the context directory
+	timestamp := time.Now().Format("20060102_150405")
+	contextPath := filepath.Join(contextDir, fmt.Sprintf("quiz_%s.txt", timestamp))
 
 	if err := os.WriteFile(contextPath, []byte(quiz), 0644); err != nil {
 		h.logger.Error("Failed to write quiz to context file: %v", err)
