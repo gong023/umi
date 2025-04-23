@@ -31,7 +31,7 @@ This is a server for the discord bot.
   - The bot cleans the memory about the current question.
   - If the current quiz does not exist, the bot does nothing.
 - /ping
-  - The bot reponses just "はい!". No the other actions like requesting OpenAI api and searching memory.
+  - The bot responds just "はい!". No the other actions like requesting OpenAI api and searching memory.
 - /help
   - The bot lists how to use the all commands.
 
@@ -74,7 +74,7 @@ This repository complies with the clean architecture. The levels are usecase -> 
   - The local files for the bot. It consists of memo/context.txt and memo/prompt dir.
   - memo/context.txt
     - The file for the conversation history. Only the bot can create or update the file.
-    - This file has to be should be in .gitignore.
+    - This file has to be in .gitignore.
   - memo/prompt/(onCreate|onQ|onAnswer|onInfo|onClue).txt
     - The directory for the prompt memories. The users and bot can create or update the files.
 
