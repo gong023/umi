@@ -2,8 +2,6 @@ package usecase
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/gong023/umi/domain"
@@ -11,12 +9,14 @@ import (
 
 type CreateCommandHandler struct {
 	openaiClient domain.OpenAIClient
+	fileSystem   domain.FileSystem
 	logger       domain.Logger
 }
 
-func NewCreateCommandHandler(openaiClient domain.OpenAIClient, logger domain.Logger) *CreateCommandHandler {
+func NewCreateCommandHandler(openaiClient domain.OpenAIClient, fileSystem domain.FileSystem, logger domain.Logger) *CreateCommandHandler {
 	return &CreateCommandHandler{
 		openaiClient: openaiClient,
+		fileSystem:   fileSystem,
 		logger:       logger,
 	}
 }
@@ -39,14 +39,20 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	}
 
 	// Check if a quiz already exists
-	contextPath := filepath.Join("memo", "context.txt")
+	contextPath := h.fileSystem.JoinPath("memo", "context.txt")
 	quizExists := false
 	var existingQuiz string
 
 	// Check if the context file exists
-	if _, err := os.Stat(contextPath); err == nil {
+	exists, err := h.fileSystem.FileExists(contextPath)
+	if err != nil {
+		h.logger.Error("Failed to check if context file exists: %v", err)
+		return
+	}
+
+	if exists {
 		// Read the existing context file
-		contextContent, err := os.ReadFile(contextPath)
+		contextContent, err := h.fileSystem.ReadFile(contextPath)
 		if err != nil {
 			h.logger.Error("Failed to read context file: %v", err)
 			return
@@ -79,8 +85,8 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	h.logger.Info("No existing quiz found, creating a new one")
 
 	// Read the prompt file
-	promptPath := filepath.Join("memo", "prompt", "oncreate.txt")
-	promptContent, err := os.ReadFile(promptPath)
+	promptPath := h.fileSystem.JoinPath("memo", "prompt", "oncreate.txt")
+	promptContent, err := h.fileSystem.ReadFile(promptPath)
 	if err != nil {
 		h.logger.Error("Failed to read prompt file: %v", err)
 		return
@@ -119,15 +125,8 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 	quiz := resp.Choices[0].Message.Content
 	h.logger.Info("Received quiz: %s", quiz)
 
-	// Create the memo directory if it doesn't exist
-	memoDir := filepath.Dir(contextPath)
-	if err := os.MkdirAll(memoDir, 0755); err != nil {
-		h.logger.Error("Failed to create memo directory: %v", err)
-		return
-	}
-
 	// Save the quiz to the context file
-	if err := os.WriteFile(contextPath, []byte(quiz), 0644); err != nil {
+	if err := h.fileSystem.WriteFile(contextPath, []byte(quiz), 0644); err != nil {
 		h.logger.Error("Failed to write quiz to context file: %v", err)
 		return
 	}

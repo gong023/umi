@@ -20,4 +20,7 @@ mockgen -destination=infra/mock/logger.go -package=mock github.com/gong023/umi/d
 # Generate mock for OpenAIClient
 mockgen -destination=infra/mock/openai.go -package=mock github.com/gong023/umi/domain OpenAIClient
 
+# Generate mock for FileSystem
+mockgen -destination=infra/mock/filesystem.go -package=mock github.com/gong023/umi/domain FileSystem
+
 echo "Mock files generated successfully"

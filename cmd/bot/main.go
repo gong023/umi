@@ -36,14 +36,17 @@ func main() {
 
 	botService := usecase.NewBotService(discordClient, openaiClient, logger)
 
+	// Create file system
+	fileSystem := infra.NewFileSystem(logger)
+
 	// Create command handlers
 	pingCommandHandler := usecase.NewPingCommandHandler(logger)
-	createCommandHandler := usecase.NewCreateCommandHandler(openaiClient, logger)
-	qCommandHandler := usecase.NewQCommandHandler(openaiClient, logger)
-	answerCommandHandler := usecase.NewAnswerCommandHandler(openaiClient, logger)
-	infoCommandHandler := usecase.NewInfoCommandHandler(openaiClient, logger)
-	clueCommandHandler := usecase.NewClueCommandHandler(openaiClient, logger)
-	quitCommandHandler := usecase.NewQuitCommandHandler(logger)
+	createCommandHandler := usecase.NewCreateCommandHandler(openaiClient, fileSystem, logger)
+	qCommandHandler := usecase.NewQCommandHandler(openaiClient, fileSystem, logger)
+	answerCommandHandler := usecase.NewAnswerCommandHandler(openaiClient, fileSystem, logger)
+	infoCommandHandler := usecase.NewInfoCommandHandler(openaiClient, fileSystem, logger)
+	clueCommandHandler := usecase.NewClueCommandHandler(openaiClient, fileSystem, logger)
+	quitCommandHandler := usecase.NewQuitCommandHandler(fileSystem, logger)
 	helpCommandHandler := usecase.NewHelpCommandHandler(logger)
 
 	// Register commands

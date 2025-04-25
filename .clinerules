@@ -68,8 +68,8 @@ This repository complies with the clean architecture. The levels are usecase -> 
 - infra
   - The package to wrap side effects. for example:
     - external dependencies over tcp/ip such as OpenAI and discord APIs.
-    - file I/O such as local files.
-  - The mocks should be created by go.uber.org/mock are in infra/mock.
+    - file I/O.
+  - The mocks about all the interface must be created by go.uber.org/mock.
 - .github
   - The files for github actions
 - memo
