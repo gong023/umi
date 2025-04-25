@@ -112,7 +112,7 @@ func (h *InfoCommandHandler) Handle(s domain.Session, i *domain.InteractionCreat
 	}
 
 	req := &domain.ChatCompletionRequest{
-		Model:       "gpt-4o-latest",
+		Model:       "chatgpt-4o-latest",
 		Messages:    messages,
 		Temperature: 0.7,
 	}
