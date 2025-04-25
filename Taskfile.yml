@@ -28,7 +28,7 @@ tasks:
   
   deploy:
     cmds:
-      - rsync -a --exclude='memo/context.txt' --exclude='umi' --exclude='.git' ./ mini:~/umi
+      - rsync -av --ignore-times --delete --exclude='memo/context.txt' --exclude='.git' ./ mini:~/umi
       - ssh mini 'cd ~/umi && /usr/local/go/bin/go build ./cmd/umi'
       - ssh mini 'sudo systemctl restart umi.service'
 
