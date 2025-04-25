@@ -26,3 +26,12 @@ tasks:
       - mockgen -destination=infra/mock/openai.go -package=mock github.com/gong023/umi/domain OpenAIClient
       - mockgen -destination=infra/mock/filesystem.go -package=mock github.com/gong023/umi/domain FileSystem
   
+  deploy:
+    cmds:
+      - rsync -a --exclude='memo/context.txt' --exclude='umi' --exclude='.git' ./ mini:~/umi
+      - ssh mini 'cd ~/umi && /usr/local/go/bin/go build ./cmd/umi'
+      - ssh mini 'sudo systemctl restart umi.service'
+
+  log:
+    cmds:
+      - ssh mini 'journalctl -u umi.service -f'
