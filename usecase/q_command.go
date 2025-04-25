@@ -2,8 +2,6 @@ package usecase
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -12,12 +10,14 @@ import (
 
 type QCommandHandler struct {
 	openaiClient domain.OpenAIClient
+	fileSystem   domain.FileSystem
 	logger       domain.Logger
 }
 
-func NewQCommandHandler(openaiClient domain.OpenAIClient, logger domain.Logger) *QCommandHandler {
+func NewQCommandHandler(openaiClient domain.OpenAIClient, fileSystem domain.FileSystem, logger domain.Logger) *QCommandHandler {
 	return &QCommandHandler{
 		openaiClient: openaiClient,
+		fileSystem:   fileSystem,
 		logger:       logger,
 	}
 }
@@ -116,15 +116,21 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 	}
 
 	// Check if a quiz exists
-	contextPath := filepath.Join("memo", "context.txt")
+	contextPath := h.fileSystem.JoinPath("memo", "context.txt")
 	quizExists := false
 	var contextContent []byte
 	var conversationHistory []string
 
 	// Check if the context file exists
-	if _, err := os.Stat(contextPath); err == nil {
+	exists, err := h.fileSystem.FileExists(contextPath)
+	if err != nil {
+		h.logger.Error("Failed to check if context file exists: %v", err)
+		return
+	}
+
+	if exists {
 		// Read the existing context file
-		contextContent, err = os.ReadFile(contextPath)
+		contextContent, err = h.fileSystem.ReadFile(contextPath)
 		if err != nil {
 			h.logger.Error("Failed to read context file: %v", err)
 			return
@@ -153,8 +159,8 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 	}
 
 	// Read the prompt file
-	promptPath := filepath.Join("memo", "prompt", "onQ.txt")
-	promptContent, err := os.ReadFile(promptPath)
+	promptPath := h.fileSystem.JoinPath("memo", "prompt", "onQ.txt")
+	promptContent, err := h.fileSystem.ReadFile(promptPath)
 	if err != nil {
 		h.logger.Error("Failed to read prompt file: %v", err)
 		return
@@ -288,7 +294,7 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 	updatedContent += answer
 
 	// Write the updated content back to the context file
-	if err := os.WriteFile(contextPath, []byte(updatedContent), 0644); err != nil {
+	if err := h.fileSystem.WriteFile(contextPath, []byte(updatedContent), 0644); err != nil {
 		h.logger.Error("Failed to update context file: %v", err)
 		// Continue with the response even if we fail to update the context file
 	} else {

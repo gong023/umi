@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/gong023/umi/domain"
@@ -22,6 +20,9 @@ func TestQCommandHandler_Handle(t *testing.T) {
 	mockLogger := mock.NewMockLogger(ctrl)
 	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 	mockLogger.EXPECT().Error(gomock.Any(), gomock.Any()).AnyTimes()
+
+	// Create a mock file system
+	mockFileSystem := mock.NewMockFileSystem(ctrl)
 
 	// Create a mock session
 	mockSession := mock.NewMockSession(ctrl)
@@ -43,35 +44,25 @@ func TestQCommandHandler_Handle(t *testing.T) {
 
 	// Set up expectations for the session
 	mockSession.EXPECT().InteractionRespond(gomock.Any(), gomock.Any()).Return(nil)
+	mockSession.EXPECT().FollowupMessage(gomock.Any(), gomock.Any()).Return(nil)
 
-	// Create a temporary directory for testing
-	tempDir := t.TempDir()
-	fpHandler := NewMockFilepathHandler(tempDir)
-
-	contextDir := fpHandler.Join("memo", "context")
-	promptDir := fpHandler.Join("memo", "prompt")
-
-	// Create the directories
-	if err := os.MkdirAll(contextDir, 0755); err != nil {
-		t.Fatalf("Failed to create context directory: %v", err)
-	}
-	if err := os.MkdirAll(promptDir, 0755); err != nil {
-		t.Fatalf("Failed to create prompt directory: %v", err)
-	}
-
-	// Create a test quiz file
+	// Set up expectations for the file system
+	contextPath := "memo/context.txt"
+	promptPath := "memo/prompt/onQ.txt"
+	
+	mockFileSystem.EXPECT().JoinPath("memo", "context.txt").Return(contextPath)
+	mockFileSystem.EXPECT().FileExists(contextPath).Return(true, nil)
+	
 	quizContent := "男性が海辺で亀のスープを飲んでいました。彼は一口飲んだ後、自殺しました。なぜでしょうか？"
-	quizPath := filepath.Join(contextDir, "quiz_20250423_123456.txt")
-	if err := os.WriteFile(quizPath, []byte(quizContent), 0644); err != nil {
-		t.Fatalf("Failed to write quiz file: %v", err)
-	}
-
-	// Create a test prompt file
+	mockFileSystem.EXPECT().ReadFile(contextPath).Return([]byte(quizContent), nil)
+	
+	mockFileSystem.EXPECT().JoinPath("memo", "prompt", "onQ.txt").Return(promptPath)
+	
 	promptContent := "あなたはウミガメのスープクイズを出題するボットです。日本語で短い問題を作成してください。問題は謎めいていて、「はい」「いいえ」で答えられる質問によって解決できるものにしてください。問題は論理的で解決可能なものにしてください。"
-	promptPath := filepath.Join(promptDir, "umigame.txt")
-	if err := os.WriteFile(promptPath, []byte(promptContent), 0644); err != nil {
-		t.Fatalf("Failed to write prompt file: %v", err)
-	}
+	mockFileSystem.EXPECT().ReadFile(promptPath).Return([]byte(promptContent), nil)
+	
+	// Expect the file to be written with updated content
+	mockFileSystem.EXPECT().WriteFile(contextPath, gomock.Any(), 0644).Return(nil)
 
 	// Create a mock response
 	mockResponse := &domain.ChatCompletionResponse{
@@ -98,20 +89,9 @@ func TestQCommandHandler_Handle(t *testing.T) {
 	mockOpenAIClient.EXPECT().CreateChatCompletion(gomock.Any()).Return(mockResponse, nil)
 
 	// Create the q command handler
-	handler := NewQCommandHandler(mockOpenAIClient, mockLogger)
-
-	// In a real implementation, we would use dependency injection
-	// to avoid having to monkey patch filepath.Join
-	t.Cleanup(func() {
-		// This would be used to clean up any resources
-		// But we're skipping the test, so it's not needed
-	})
+	handler := NewQCommandHandler(mockOpenAIClient, mockFileSystem, mockLogger)
 
 	// Handle the interaction
-	// Note: This test will fail because we can't monkey patch filepath.Join
-	// In a real implementation, we would use dependency injection
-	// For now, we'll just skip the test
-	t.Skip("This test requires monkey patching filepath.Join, which is not possible in Go")
 	handler.Handle(mockSession, interaction)
 }
 
@@ -127,6 +107,9 @@ func TestQCommandHandler_Handle_NoMessage(t *testing.T) {
 	mockLogger := mock.NewMockLogger(ctrl)
 	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 	mockLogger.EXPECT().Error(gomock.Any(), gomock.Any()).AnyTimes()
+
+	// Create a mock file system
+	mockFileSystem := mock.NewMockFileSystem(ctrl)
 
 	// Create a mock session
 	mockSession := mock.NewMockSession(ctrl)
@@ -145,7 +128,7 @@ func TestQCommandHandler_Handle_NoMessage(t *testing.T) {
 	mockSession.EXPECT().InteractionRespond(gomock.Any(), gomock.Any()).Return(nil)
 
 	// Create the q command handler
-	handler := NewQCommandHandler(mockOpenAIClient, mockLogger)
+	handler := NewQCommandHandler(mockOpenAIClient, mockFileSystem, mockLogger)
 
 	// Handle the interaction
 	handler.Handle(mockSession, interaction)
@@ -155,6 +138,51 @@ func TestQCommandHandler_Handle_NoMessage(t *testing.T) {
 }
 
 func TestQCommandHandler_Handle_NoQuiz(t *testing.T) {
-	// Skip this test for now
-	t.Skip("This test requires monkey patching filepath.Join, which is not possible in Go")
+	// Create a mock controller
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Create a mock OpenAI client
+	mockOpenAIClient := mock.NewMockOpenAIClient(ctrl)
+
+	// Create a mock logger
+	mockLogger := mock.NewMockLogger(ctrl)
+	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Error(gomock.Any(), gomock.Any()).AnyTimes()
+
+	// Create a mock file system
+	mockFileSystem := mock.NewMockFileSystem(ctrl)
+
+	// Create a mock session
+	mockSession := mock.NewMockSession(ctrl)
+
+	// Create a mock interaction with a question
+	interaction := &domain.InteractionCreate{
+		ID:   "test-interaction-id",
+		Type: 2, // APPLICATION_COMMAND
+		Data: &domain.ApplicationCommandInteractionData{
+			Name: "q",
+			Options: []*domain.ApplicationCommandInteractionDataOption{
+				{
+					Name:  "message",
+					Value: "男性は何を飲んでいましたか？",
+				},
+			},
+		},
+	}
+
+	// Set up expectations for the session
+	mockSession.EXPECT().InteractionRespond(gomock.Any(), gomock.Any()).Return(nil)
+	mockSession.EXPECT().FollowupMessage(gomock.Any(), gomock.Any()).Return(nil)
+
+	// Set up expectations for the file system - no quiz exists
+	contextPath := "memo/context.txt"
+	mockFileSystem.EXPECT().JoinPath("memo", "context.txt").Return(contextPath)
+	mockFileSystem.EXPECT().FileExists(contextPath).Return(false, nil)
+
+	// Create the q command handler
+	handler := NewQCommandHandler(mockOpenAIClient, mockFileSystem, mockLogger)
+
+	// Handle the interaction
+	handler.Handle(mockSession, interaction)
 }

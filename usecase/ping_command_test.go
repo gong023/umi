@@ -31,10 +31,13 @@ func (l *MockLogger) Debug(format string, args ...interface{}) {
 
 // MockSession is a mock implementation of the domain.Session interface
 type MockSession struct {
-	RespondCalled bool
-	RespondError  error
-	Interaction   *domain.InteractionCreate
-	Response      *domain.InteractionResponse
+	RespondCalled   bool
+	FollowupCalled  bool
+	RespondError    error
+	FollowupError   error
+	Interaction     *domain.InteractionCreate
+	Response        *domain.InteractionResponse
+	FollowupContent string
 }
 
 func (s *MockSession) InteractionRespond(i *domain.InteractionCreate, r *domain.InteractionResponse) error {
@@ -42,6 +45,13 @@ func (s *MockSession) InteractionRespond(i *domain.InteractionCreate, r *domain.
 	s.Interaction = i
 	s.Response = r
 	return s.RespondError
+}
+
+func (s *MockSession) FollowupMessage(i *domain.InteractionCreate, content string) error {
+	s.FollowupCalled = true
+	s.Interaction = i
+	s.FollowupContent = content
+	return s.FollowupError
 }
 
 func TestPingCommandHandler_Handle(t *testing.T) {
