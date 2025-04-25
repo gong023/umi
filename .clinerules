@@ -66,7 +66,9 @@ This repository complies with the clean architecture. The levels are usecase -> 
   - The package for the core logic.
   - There should be test files. In the tests, the dependencies for the infra package should be mocked.
 - infra
-  - The package for the external dependencies over tcp/ip such as OpenAI and discord APIs.
+  - The package to wrap side effects. for example:
+    - external dependencies over tcp/ip such as OpenAI and discord APIs.
+    - file I/O such as local files.
   - The mocks should be created by go.uber.org/mock are in infra/mock.
 - .github
   - The files for github actions
