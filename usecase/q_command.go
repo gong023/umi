@@ -248,7 +248,7 @@ func (h *QCommandHandler) Handle(s domain.Session, i *domain.InteractionCreate) 
 	}
 
 	req := &domain.ChatCompletionRequest{
-		Model:       "gpt-4-turbo",
+		Model:       "chatgpt-4o-latest",
 		Messages:    messages,
 		Temperature: 0.7,
 	}

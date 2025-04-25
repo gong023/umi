@@ -94,7 +94,7 @@ func (h *CreateCommandHandler) Handle(s domain.Session, i *domain.InteractionCre
 
 	// Create a request to the OpenAI API
 	req := &domain.ChatCompletionRequest{
-		Model: "gpt-4-turbo",
+		Model: "chatgpt-4o-latest",
 		Messages: []domain.ChatMessage{
 			{
 				Role:    "system",

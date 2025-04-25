@@ -38,7 +38,7 @@ func (h *QuizCommandHandler) Handle(s domain.Session, i *domain.InteractionCreat
 
 	// Create a request to the OpenAI API
 	req := &domain.ChatCompletionRequest{
-		Model: "gpt-4-turbo",
+		Model: "chatgpt-4o-latest",
 		Messages: []domain.ChatMessage{
 			{
 				Role:    "system",

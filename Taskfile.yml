@@ -35,3 +35,7 @@ tasks:
   log:
     cmds:
       - ssh mini 'journalctl -u umi.service -f'
+  
+  context:
+    cmds:
+      - ssh mini 'cat ~/umi/memo/context.txt'

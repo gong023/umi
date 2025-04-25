@@ -106,7 +106,7 @@ func (h *ClueCommandHandler) Handle(s domain.Session, i *domain.InteractionCreat
 	})
 
 	req := &domain.ChatCompletionRequest{
-		Model:       "gpt-4-turbo",
+		Model:       "chatgpt-4o-latest",
 		Messages:    messages,
 		Temperature: 0.7,
 	}

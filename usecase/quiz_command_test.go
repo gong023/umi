@@ -37,7 +37,7 @@ func TestQuizCommandHandler_Handle(t *testing.T) {
 
 	// Set up expectations for the OpenAI client
 	expectedRequest := &domain.ChatCompletionRequest{
-		Model: "gpt-4-turbo",
+		Model: "chatgpt-4o-latest",
 		Messages: []domain.ChatMessage{
 			{
 				Role:    "system",
