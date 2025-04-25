@@ -83,6 +83,7 @@ This repository complies with the clean architecture. The levels are usecase -> 
 # Coding styles
 
 - No need comments unless the functions are too complicated(^50 lines) or need context on the background.
-- goimport should be used instead of gofmt.
 - When the task is completed, make sure the lint and test are passed.
 - When the task is completed, you can make sure "go build" but must not "go run".
+- We use https://github.com/go-task/task for the util commands. Refer to this how to run lint, test, fmt, build and mockgen.
+   - For example, run "task lint" when you run the lint.

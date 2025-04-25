@@ -67,7 +67,11 @@ func (c *OpenAIClient) CreateChatCompletion(req *domain.ChatCompletionRequest) (
 		c.logger.Error("Failed to send HTTP request: %v", err)
 		return nil, fmt.Errorf("failed to send HTTP request: %w", err)
 	}
-	defer httpResp.Body.Close()
+	defer func() {
+		if err := httpResp.Body.Close(); err != nil {
+			c.logger.Error("Failed to close response body: %v", err)
+		}
+	}()
 
 	// Read the response body
 	body, err := io.ReadAll(httpResp.Body)

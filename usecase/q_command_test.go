@@ -49,18 +49,18 @@ func TestQCommandHandler_Handle(t *testing.T) {
 	// Set up expectations for the file system
 	contextPath := "memo/context.txt"
 	promptPath := "memo/prompt/onQ.txt"
-	
+
 	mockFileSystem.EXPECT().JoinPath("memo", "context.txt").Return(contextPath)
 	mockFileSystem.EXPECT().FileExists(contextPath).Return(true, nil)
-	
+
 	quizContent := "男性が海辺で亀のスープを飲んでいました。彼は一口飲んだ後、自殺しました。なぜでしょうか？"
 	mockFileSystem.EXPECT().ReadFile(contextPath).Return([]byte(quizContent), nil)
-	
+
 	mockFileSystem.EXPECT().JoinPath("memo", "prompt", "onQ.txt").Return(promptPath)
-	
+
 	promptContent := "あなたはウミガメのスープクイズを出題するボットです。日本語で短い問題を作成してください。問題は謎めいていて、「はい」「いいえ」で答えられる質問によって解決できるものにしてください。問題は論理的で解決可能なものにしてください。"
 	mockFileSystem.EXPECT().ReadFile(promptPath).Return([]byte(promptContent), nil)
-	
+
 	// Expect the file to be written with updated content
 	mockFileSystem.EXPECT().WriteFile(contextPath, gomock.Any(), 0644).Return(nil)
 

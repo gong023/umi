@@ -21,13 +21,22 @@ func NewSimpleLogger() *SimpleLogger {
 }
 
 func (l *SimpleLogger) Info(format string, args ...interface{}) {
-	l.infoLogger.Output(2, fmt.Sprintf(format, args...))
+	if err := l.infoLogger.Output(2, fmt.Sprintf(format, args...)); err != nil {
+		// We can't use the logger itself to log this error as it would cause a recursive call
+		fmt.Fprintf(os.Stderr, "Failed to log info message: %v\n", err)
+	}
 }
 
 func (l *SimpleLogger) Error(format string, args ...interface{}) {
-	l.errorLogger.Output(2, fmt.Sprintf(format, args...))
+	if err := l.errorLogger.Output(2, fmt.Sprintf(format, args...)); err != nil {
+		// We can't use the logger itself to log this error as it would cause a recursive call
+		fmt.Fprintf(os.Stderr, "Failed to log error message: %v\n", err)
+	}
 }
 
 func (l *SimpleLogger) Debug(format string, args ...interface{}) {
-	l.debugLogger.Output(2, fmt.Sprintf(format, args...))
+	if err := l.debugLogger.Output(2, fmt.Sprintf(format, args...)); err != nil {
+		// We can't use the logger itself to log this error as it would cause a recursive call
+		fmt.Fprintf(os.Stderr, "Failed to log debug message: %v\n", err)
+	}
 }

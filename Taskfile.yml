@@ -1,0 +1,28 @@
+version: "3"
+
+tasks:
+  lint:
+    cmds:
+      - golangci-lint run
+
+  fmt:
+    cmds:
+      - golangci-lint fmt
+
+  test:
+    cmds:
+      - go test ./...
+
+  build:
+    cmds:
+      - go build ./...
+
+  mockgen:
+    cmds:
+      - mockgen -destination=infra/mock/discord.go -package=mock github.com/gong023/umi/domain DiscordClient
+      - mockgen -destination=infra/mock/command.go -package=mock github.com/gong023/umi/domain CommandHandler
+      - mockgen -destination=infra/mock/session.go -package=mock github.com/gong023/umi/domain Session
+      - mockgen -destination=infra/mock/logger.go -package=mock github.com/gong023/umi/domain Logger
+      - mockgen -destination=infra/mock/openai.go -package=mock github.com/gong023/umi/domain OpenAIClient
+      - mockgen -destination=infra/mock/filesystem.go -package=mock github.com/gong023/umi/domain FileSystem
+  

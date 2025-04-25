@@ -113,7 +113,7 @@ func (s *Session) InteractionRespond(i *domain.InteractionCreate, r *domain.Inte
 	if i.Original != nil {
 		originalInteractionCreate, ok := i.Original.(*discordgo.InteractionCreate)
 		if ok {
-			s.logger.Info("Using original InteractionCreate: ID=%s, Type=%d", originalInteractionCreate.Interaction.ID, originalInteractionCreate.Interaction.Type)
+			s.logger.Info("Using original InteractionCreate: ID=%s, Type=%d", originalInteractionCreate.ID, originalInteractionCreate.Type)
 
 			response := &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseType(r.Type),
@@ -143,7 +143,7 @@ func (s *Session) FollowupMessage(i *domain.InteractionCreate, content string) e
 	if i.Original != nil {
 		originalInteractionCreate, ok := i.Original.(*discordgo.InteractionCreate)
 		if ok {
-			s.logger.Info("Sending followup message for interaction: ID=%s", originalInteractionCreate.Interaction.ID)
+			s.logger.Info("Sending followup message for interaction: ID=%s", originalInteractionCreate.ID)
 
 			// Create a webhook message
 			_, err := s.session.FollowupMessageCreate(originalInteractionCreate.Interaction, true, &discordgo.WebhookParams{
@@ -169,8 +169,8 @@ func ConvertInteraction(i *discordgo.InteractionCreate) *domain.InteractionCreat
 	}
 
 	result := &domain.InteractionCreate{
-		ID:       i.Interaction.ID,
-		Type:     int(i.Interaction.Type),
+		ID:       i.ID,
+		Type:     int(i.Type),
 		Original: i, // Store the entire InteractionCreate object
 	}
 

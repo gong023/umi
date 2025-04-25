@@ -33,14 +33,14 @@ func (fs *FileSystem) ReadFile(path string) ([]byte, error) {
 // WriteFile writes data to a file at the given path
 func (fs *FileSystem) WriteFile(path string, data []byte, perm int) error {
 	fs.logger.Info("Writing file: %s", path)
-	
+
 	// Ensure the directory exists
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		fs.logger.Error("Failed to create directory: %v", err)
 		return err
 	}
-	
+
 	if err := os.WriteFile(path, data, os.FileMode(perm)); err != nil {
 		fs.logger.Error("Failed to write file: %v", err)
 		return err

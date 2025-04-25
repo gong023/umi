@@ -43,14 +43,14 @@ func TestCreateCommandHandler_Handle_NewQuiz(t *testing.T) {
 	// Set up the file system mock
 	contextPath := "memo/context.txt"
 	promptPath := "memo/prompt/oncreate.txt"
-	
+
 	// Mock file existence check
 	mockFileSystem.EXPECT().FileExists(contextPath).Return(false, nil)
-	
+
 	// Mock prompt file read
 	promptContent := "あなたはウミガメのスープクイズを出題するボットです。"
 	mockFileSystem.EXPECT().ReadFile(promptPath).Return([]byte(promptContent), nil)
-	
+
 	// Mock path joining
 	mockFileSystem.EXPECT().JoinPath("memo", "context.txt").Return(contextPath).AnyTimes()
 	mockFileSystem.EXPECT().JoinPath("memo", "prompt", "oncreate.txt").Return(promptPath).AnyTimes()
@@ -94,7 +94,7 @@ func TestCreateCommandHandler_Handle_NewQuiz(t *testing.T) {
 
 	// Verify that the quiz was saved correctly
 	if string(savedQuizData) != mockResponse.Choices[0].Message.Content {
-		t.Errorf("Expected quiz to be saved as '%s', but got '%s'", 
+		t.Errorf("Expected quiz to be saved as '%s', but got '%s'",
 			mockResponse.Choices[0].Message.Content, string(savedQuizData))
 	}
 }
@@ -133,14 +133,14 @@ func TestCreateCommandHandler_Handle_ExistingQuiz(t *testing.T) {
 
 	// Set up the file system mock
 	contextPath := "memo/context.txt"
-	
+
 	// Mock file existence check
 	mockFileSystem.EXPECT().FileExists(contextPath).Return(true, nil)
-	
+
 	// Mock file read
 	existingQuizContent := "これは既存のクイズです。"
 	mockFileSystem.EXPECT().ReadFile(contextPath).Return([]byte(existingQuizContent), nil)
-	
+
 	// Mock path joining
 	mockFileSystem.EXPECT().JoinPath("memo", "context.txt").Return(contextPath).AnyTimes()
 
